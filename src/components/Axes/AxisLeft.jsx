@@ -1,6 +1,6 @@
 const TICK_LENGTH = 6;
 
-export const AxisLeft = ({ yScale, pixelsPerTick, label, boundsWidth }) => {
+export const AxisLeft = ({ yScale, pixelsPerTick, label, boundsWidth, labelFontSize = 20, tickFontSize = 15 }) => {
   const range = yScale.range();
   const height = range[0] - range[1];
   const numberOfTicksTarget = Math.floor(height / pixelsPerTick);
@@ -17,7 +17,7 @@ export const AxisLeft = ({ yScale, pixelsPerTick, label, boundsWidth }) => {
           <line x2={-TICK_LENGTH} stroke="currentColor" opacity={0.3} />
           <text
             style={{
-              fontSize: "15px",
+              fontSize: `${tickFontSize}px`,
               textAnchor: "middle",
               transform: "translateX(-30px)",
             }}
@@ -31,7 +31,7 @@ export const AxisLeft = ({ yScale, pixelsPerTick, label, boundsWidth }) => {
         <text
           x={-height / 2}
           y={-80}
-          fontSize={20}
+          fontSize={labelFontSize}
           textAnchor="middle"
           transform="rotate(-90)"
         >

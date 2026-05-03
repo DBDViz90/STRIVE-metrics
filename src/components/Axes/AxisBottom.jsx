@@ -2,7 +2,7 @@ import * as d3 from 'd3';
 
 const TICK_LENGTH = 6;
 
-export const AxisBottom = ({ xScale, pixelsPerTick, label, boundsHeight, showVerticalGrid = true }) => {
+export const AxisBottom = ({ xScale, pixelsPerTick, label, boundsHeight, showVerticalGrid = true, labelFontSize = 20, tickFontSize = 15 }) => {
   const range = xScale.range();
   const width = range[1] - range[0];
   const numberOfTicksTarget = Math.floor(width / pixelsPerTick);
@@ -43,7 +43,7 @@ export const AxisBottom = ({ xScale, pixelsPerTick, label, boundsHeight, showVer
           <line y2={TICK_LENGTH} stroke="currentColor" />
           <text
             style={{
-              fontSize: "15px",
+              fontSize: `${tickFontSize}px`,
               textAnchor: "middle",
               transform: "translateY(25px)"
             }}
@@ -57,7 +57,7 @@ export const AxisBottom = ({ xScale, pixelsPerTick, label, boundsHeight, showVer
         <text
           x={width / 2}
           y={60}
-          fontSize={20}
+          fontSize={labelFontSize}
           textAnchor="middle"
         >
           {label}

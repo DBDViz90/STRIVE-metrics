@@ -15,6 +15,8 @@ export const StackedAreaChart = ({ width, height, data }) => {
     const boundsWidth = width - MARGIN.left - MARGIN.right;
     const boundsHeight = height - MARGIN.top - MARGIN.bottom;
     const titleFontSize = Math.max(14, width * 0.025);
+    const axisLabelFontSize = Math.max(14, width * 0.02);
+    const tickFontSize = Math.max(12, width * 0.018);
 
     /* --- series configuration --- */
     const seriesKeys = ["coal", "oil", "gas", "nuclear", "hydro", "solar", "wind", "biofuel", "other_renewable"];
@@ -87,12 +89,15 @@ export const StackedAreaChart = ({ width, height, data }) => {
     }, [stackSeries, areaBuilder, colorScale]);
 
     /* --- Legend --- */
+    const legendItemHeight = Math.max(16, width * 0.02);
+    const legendFontSize = Math.max(10, width * 0.015);
+    const legendRectSize = Math.max(10, width * 0.012);
     const legend = (
-        <g transform={`translate(${MARGIN.left + boundsWidth + 20}, ${MARGIN.top - 40})`}>
+        <g transform={`translate(${MARGIN.left + boundsWidth + 20}, ${MARGIN.top})`}>
             {[...sortedSeriesKeys].reverse().map((key, i) => (
-                <g key={key} transform={`translate(0, ${i * 20})`}>
-                    <rect width={12} height={12} fill={colorScale(key)} />
-                    <text x={15} y={10} fontSize={12} textAnchor="start">
+                <g key={key} transform={`translate(0, ${i * legendItemHeight})`}>
+                    <rect width={legendRectSize} height={legendRectSize} fill={colorScale(key)} />
+                    <text x={legendRectSize + 5} y={legendRectSize / 2 + 4} fontSize={legendFontSize} textAnchor="start" dominantBaseline="middle">
                         {key.charAt(0).toUpperCase() + key.slice(1)}
                     </text>
                 </g>
@@ -115,14 +120,15 @@ export const StackedAreaChart = ({ width, height, data }) => {
                 height={boundsHeight}
                 transform={`translate(${[MARGIN.left, MARGIN.top].join(",")})`}
             >
-                <AxisBottom xScale={xScale} pixelsPerTick={80} boundsHeight={boundsHeight} label="Year" showVerticalGrid={false} />
-                <AxisLeft yScale={yScale} pixelsPerTick={40} boundsWidth={boundsWidth} label="Energy [TWh]" />
+                <AxisBottom xScale={xScale} pixelsPerTick={80} boundsHeight={boundsHeight} label="Year" showVerticalGrid={false} labelFontSize={axisLabelFontSize} tickFontSize={tickFontSize} />
+                <AxisLeft yScale={yScale} pixelsPerTick={40} boundsWidth={boundsWidth} label="Energy [TWh]" labelFontSize={axisLabelFontSize} tickFontSize={tickFontSize} />
                 {allPaths}
             </g>
             {legend}
         </svg>
     );
 };
+
 
 
 /*--- responsive wrapper for StackedAreaChart ---*/
@@ -144,3 +150,4 @@ export const ResponsiveStackedAreaChart = ({ width = 500, height = 500, ...props
         </div>
     );
 };
+
