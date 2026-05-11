@@ -1,5 +1,9 @@
 {
+<<<<<<< HEAD
   "name": "swiss-metrics-dashboard",
+=======
+  "name": "dashboard-owid-responsiveness",
+>>>>>>> b500cfacd90762921c86c39fd98b38001ee79978
   "private": true,
   "version": "0.0.0",
   "type": "module",

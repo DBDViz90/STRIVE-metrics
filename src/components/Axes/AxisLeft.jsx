@@ -1,5 +1,6 @@
 const TICK_LENGTH = 6;
 
+<<<<<<< HEAD
 /**
  * Left axis component
  * @param {Object} props
@@ -20,6 +21,9 @@ export const AxisLeft = ({
     tickFontSize = 15,
     tickFormat = (v) => v.toString()  // Default: convert to string
 }) => {
+=======
+export const AxisLeft = ({ yScale, pixelsPerTick, label, boundsWidth, labelFontSize = 20, tickFontSize = 15 }) => {
+>>>>>>> b500cfacd90762921c86c39fd98b38001ee79978
   const range = yScale.range();
   const height = range[0] - range[1];
   const numberOfTicksTarget = Math.floor(height / pixelsPerTick);
@@ -41,7 +45,11 @@ export const AxisLeft = ({
               transform: "translateX(-30px)",
             }}
           >
+<<<<<<< HEAD
             {tickFormat(value)}
+=======
+            {value}
+>>>>>>> b500cfacd90762921c86c39fd98b38001ee79978
           </text>
         </g>
       ))}
@@ -60,5 +68,8 @@ export const AxisLeft = ({
     </g>
   );
 };
+<<<<<<< HEAD
 
 export default AxisLeft;
+=======
+>>>>>>> b500cfacd90762921c86c39fd98b38001ee79978
