@@ -1,7 +1,7 @@
 /*
  * Scatterplot with Regression Line
  * Displays data points (GDP vs metric) with best-fit regression curve
- * Supports: linear, logarithmic, Michaelis-Menten, universal saturation models...
+ * Supports: linear, logarithmic, Michaelis-Menten, universal saturation models.
  */
 import { useState, useMemo, useRef, useCallback, useEffect } from 'react';
 import * as d3 from 'd3';

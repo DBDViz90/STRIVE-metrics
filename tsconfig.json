@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 {
   "compilerOptions": {
     "baseUrl": "./",
@@ -7,14 +6,4 @@
     },
     "jsx": "preserve"
   }
-=======
-{
-  "compilerOptions": {
-    "baseUrl": "./",
-    "paths": {
-      "@/*": ["./src/*"]
-    },
-    "jsx": "preserve"
-  }
->>>>>>> b500cfacd90762921c86c39fd98b38001ee79978
 }

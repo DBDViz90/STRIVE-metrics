@@ -2,7 +2,6 @@ import * as d3 from 'd3';
 
 const TICK_LENGTH = 6;
 
-<<<<<<< HEAD
 /**
  * Bottom axis component
  * @param {Object} props
@@ -25,9 +24,6 @@ export const AxisBottom = ({
     tickFontSize = 15,
     tickFormat = (v) => v.toString()  // Default: convert to string
 }) => {
-=======
-export const AxisBottom = ({ xScale, pixelsPerTick, label, boundsHeight, showVerticalGrid = true, labelFontSize = 20, tickFontSize = 15 }) => {
->>>>>>> b500cfacd90762921c86c39fd98b38001ee79978
   const range = xScale.range();
   const width = range[1] - range[0];
   const numberOfTicksTarget = Math.floor(width / pixelsPerTick);
@@ -73,11 +69,7 @@ export const AxisBottom = ({ xScale, pixelsPerTick, label, boundsHeight, showVer
               transform: "translateY(25px)"
             }}
           >
-<<<<<<< HEAD
             {tickFormat(value)}
-=======
-            {value}
->>>>>>> b500cfacd90762921c86c39fd98b38001ee79978
           </text>
         </g>
       ))}
@@ -95,8 +87,5 @@ export const AxisBottom = ({ xScale, pixelsPerTick, label, boundsHeight, showVer
     </g>
   );
 };
-<<<<<<< HEAD
 
 export default AxisBottom;
-=======
->>>>>>> b500cfacd90762921c86c39fd98b38001ee79978
