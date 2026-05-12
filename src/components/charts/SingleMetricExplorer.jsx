@@ -32,6 +32,7 @@ function getCategoryFromName(metricName) {
     if (metricName.startsWith('SPI2023_')) return 'SPI2023';
     if (metricName.startsWith('GDP_')) return 'GDP';
     if (metricName.startsWith('POP_')) return 'Population';
+    if (metricName.startsWith('OFS_')) return 'OFS';
     return 'Other';
 }
 

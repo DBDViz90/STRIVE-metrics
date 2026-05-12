@@ -1,1 +1,0 @@
-/*--- Comparing the evolution from 1965 to 2024 [slider] of primary energy consumption in TWh between countries ---*/

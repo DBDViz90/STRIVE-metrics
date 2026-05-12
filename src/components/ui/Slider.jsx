@@ -15,8 +15,9 @@ const HANDLE_SIZE = 16;
  * @param {number} props.max - Absolute maximum value
  * @param {Function} props.onChange - Callback with new [min, max]
  * @param {string} props.label - Optional label for the slider (e.g., "Year")
+ * @param {string} props.unit - Optional unit suffix for values (e.g., "$USD", "")
  */
-export const Slider = ({ value, min, max, onChange, label = 'Year' }) => {
+export const Slider = ({ value, min, max, onChange, label = 'Year', unit = '$USD' }) => {
     const [isDragging, setIsDragging] = useState(null); // 'min', 'max', or null
     const dragHandleRef = useRef(null);
     const containerRef = useRef(null);
@@ -89,9 +90,9 @@ export const Slider = ({ value, min, max, onChange, label = 'Year' }) => {
             <div className="flex justify-between mb-2">
                 <span className="text-xs text-gray-500">{label}</span>
                 <div className="flex gap-2">
-                    <span className="text-xs text-gray-600 font-medium">{Math.round(value[0])} $USD</span>
+                    <span className="text-xs text-gray-600 font-medium">{Math.round(value[0])} {unit}</span>
                     <span className="text-xs text-gray-500">to</span>
-                    <span className="text-xs text-gray-600 font-medium">{Math.round(value[1])} $USD</span>
+                    <span className="text-xs text-gray-600 font-medium">{Math.round(value[1])} {unit}</span>
                 </div>
             </div>
             

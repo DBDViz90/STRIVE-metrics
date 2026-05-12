@@ -1,7 +1,6 @@
 /*
- * Scatterplot with Regression Line
- * Displays data points (GDP vs metric) with best-fit regression curve
- * Supports: linear, logarithmic, Michaelis-Menten, universal saturation models.
+ * Line Chart with Metrics
+ * Displays metric values over years as a line chart
  */
 import { useState, useMemo, useRef, useCallback, useEffect } from 'react';
 import * as d3 from 'd3';
@@ -78,58 +77,7 @@ function getR2Value(regression) {
 }
 
 /**
- * Generate points for a regression line/curve
- * @param {string} modelType - 'linear', 'logarithmic', 'michaelis_menten', 'exp_saturating'
- * @param {Object} params - Model parameters
- * @param {number[]} xRange - [minX, maxX] for generating points
- * @param {number} numPoints - Number of points to generate
- * @returns {Array<{x: number, y: number}>} - Array of curve points
- */
-function generateRegressionPoints(modelType, params, xRange, numPoints = 100) {
-    if (!params || !xRange) return [];
-    
-    const [minX, maxX] = xRange;
-    const step = (maxX - minX) / (numPoints - 1);
-    const points = [];
-    
-    for (let i = 0; i < numPoints; i++) {
-        const x = minX + step * i;
-        let y = null;
-        
-        switch (modelType) {
-            case 'linear':
-                y = params.lin_slope * x + params.lin_intercept;
-                break;
-            case 'logarithmic':
-                y = params.log_a + params.log_b * Math.log(x);
-                break;
-            case 'michaelis_menten':
-                y = (params.mm_vmax * x) / (params.mm_km + x);
-                break;
-            case 'exp_saturating':
-                y = params.sat_a + params.sat_c * (1 - Math.exp(-params.sat_b * x));
-                break;
-            case 'constant':
-                // For constant model, use the mean y value from linear intercept
-                y = params.lin_intercept || 0;
-                break;
-            default:
-                // Other models - try linear as fallback
-                if (params.lin_slope !== undefined) {
-                    y = params.lin_slope * x + params.lin_intercept;
-                }
-        }
-        
-        if (y !== null && !isNaN(y) && isFinite(y)) {
-            points.push({ x, y });
-        }
-    }
-    
-    return points;
-}
-
-/**
- * Scatterplot with Regression Line
+ * Line Chart with Metrics
  * 
  * @param {Object} props
  * @param {Array} props.data - Array of data points: [{ x: gdp, metric1: value, year: year }, ...]
@@ -148,11 +96,11 @@ function generateRegressionPoints(modelType, params, xRange, numPoints = 100) {
  * @param {Function} [props.onModelTypesChange] - Callback when model types change
  * @param {number} [props.paneWidth] - Current pane width (controlled)
  * @param {Function} [props.onPaneWidthChange] - Callback when pane width changes
- * @param {string} [props.xAxisLabel='GDP per capita ($USD)'] - Label for x-axis
+ * @param {string} [props.xAxisLabel='Year'] - Label for x-axis
  * @param {string} [props.yAxisLabel='Metric Value'] - Label for y-axis
  * @param {string} [props.title=''] - Chart title
  */
-export const ScatterplotWithRegression = ({
+export const LineChartWithMetrics = ({
     data,
     seriesKeys,
     regressionResults,
@@ -169,7 +117,7 @@ export const ScatterplotWithRegression = ({
     onModelTypesChange: externalOnModelTypesChange,
     paneWidth: externalPaneWidth,
     onPaneWidthChange: externalOnPaneWidthChange,
-    xAxisLabel = 'GDP per capita ($USD)',
+    xAxisLabel = 'Year',
     yAxisLabel = 'Metric Value',
     title = '',
     width = 800,
@@ -197,7 +145,7 @@ export const ScatterplotWithRegression = ({
     const setPaneWidth = externalOnPaneWidthChange !== undefined ? externalOnPaneWidthChange : setInternalPaneWidth;
     
     // Local state (not shared)
-    const [xDomain, setXDomain] = useState(null);
+    const [yearDomain, setYearDomain] = useState(null);
     const [isResizing, setIsResizing] = useState(false);
     const [showCategoryDropdown, setShowCategoryDropdown] = useState(false);
     const [showModelDropdown, setShowModelDropdown] = useState(false);
@@ -318,14 +266,16 @@ export const ScatterplotWithRegression = ({
         const categories = metadata.map(m => m.category);
         return [...new Set(categories)].filter(c => c); // Filter out empty/null categories
     }, [metadata]);
-    
+
+
+
     // Text for category filter button
     const categoryButtonText = useMemo(() => {
         if (selectedCategories.length === 0) return "None";
         if (selectedCategories.length === allCategories.length) return "Filter by category";
         return selectedCategories.join(", ");
     }, [selectedCategories, allCategories]);
-    
+
     // Model type options and their corresponding best_model values
     const MODEL_TYPES = useMemo(() => ({
         'Constant': ['constant'],
@@ -333,8 +283,8 @@ export const ScatterplotWithRegression = ({
         'Saturating': ['michaelis_menten', 'exp_saturating', 'logarithmic'],
         'Undefined': ['other']
     }), []);
-    
-    const allModelTypes = useMemo(() => Object.keys(MODEL_TYPES), []);
+
+    const allModelTypes = useMemo(() => Object.keys(MODEL_TYPES), [MODEL_TYPES]);
 
     // Get count of metrics for each model type display name
     const modelTypeCounts = useMemo(() => {
@@ -356,116 +306,119 @@ export const ScatterplotWithRegression = ({
         if (selectedModelTypes.length === allModelTypes.length) return "Filter by model type";
         return selectedModelTypes.map(mt => `${mt} (${modelTypeCounts[mt] || 0})`).join(", ");
     }, [selectedModelTypes, allModelTypes, modelTypeCounts]);
-    
+
     // Get regression result for selected metric
     const regressionForMetric = useMemo(() => {
         if (!selectedMetric || !regressionResults) return null;
         return regressionResults.find(r => r.metric_name === selectedMetric);
     }, [selectedMetric, regressionResults]);
-    
-    // Get GDP range from data
-    const gdpRange = useMemo(() => {
-        if (data.length === 0) return [0, 100];
-        const allX = data.map(d => d.x).filter(x => x !== null && x !== undefined);
-        if (allX.length === 0) return [0, 100];
-        const [minX, maxX] = d3.extent(allX);
-        return [minX || 0, maxX || 100];
+
+    // Get year range from data
+    const yearRange = useMemo(() => {
+        if (data.length === 0) return [1960, 2024];
+        const allYears = data.map(d => d.year).filter(y => y !== null && y !== undefined);
+        if (allYears.length === 0) return [1960, 2024];
+        const [minYear, maxYear] = d3.extent(allYears);
+        return [minYear || 1960, maxYear || 2024];
     }, [data]);
-    
-    // Initialize xDomain
+
+    // Initialize yearDomain
     useEffect(() => {
-        if (xDomain === null && gdpRange[0] !== 0 && gdpRange[1] !== 0) {
-            setXDomain(gdpRange);
+        if (yearDomain === null && yearRange[0] !== 1960 && yearRange[1] !== 2024) {
+            setYearDomain(yearRange);
         }
-    }, [gdpRange, xDomain]);
-    
-    // Update xDomain when metric changes
+    }, [yearRange, yearDomain]);
+
+    // Update yearDomain when metric changes
     useEffect(() => {
         if (!selectedMetric) {
-            setXDomain(gdpRange);
-        } else if (regressionForMetric && regressionForMetric.n_observations > 0) {
-            // Use the data's GDP range for this metric
-            const metricX = data
-                .filter(d => d[selectedMetric] !== null && d[selectedMetric] !== undefined && d.x !== null && d.x !== undefined)
-                .map(d => d.x);
-            if (metricX.length > 0) {
-                const [minX, maxX] = d3.extent(metricX);
-                setXDomain([minX || gdpRange[0], maxX || gdpRange[1]]);
+            setYearDomain(yearRange);
+        } else {
+            // Use the data's year range for this metric
+            const metricYears = data
+                .filter(d => d[selectedMetric] !== null && d[selectedMetric] !== undefined && d.year !== null && d.year !== undefined)
+                .map(d => d.year);
+            if (metricYears.length > 0) {
+                const [minYear, maxYear] = d3.extent(metricYears);
+                setYearDomain([minYear || yearRange[0], maxYear || yearRange[1]]);
             }
         }
-    }, [selectedMetric, data, gdpRange, regressionForMetric]);
+    }, [selectedMetric, data, yearRange]);
     
-    // Effective xDomain (controlled by slider)
-    const effectiveXDomain = xDomain || gdpRange;
+    // Effective yearDomain (controlled by slider)
+    const effectiveYearDomain = yearDomain || yearRange;
     
-    // Filter data based on x-domain
+    // Filter data based on year-domain
     const filteredData = useMemo(() => {
-        return data.filter(d => d.x >= effectiveXDomain[0] && d.x <= effectiveXDomain[1]);
-    }, [data, effectiveXDomain]);
-    
-    // Get scatter points for selected metric
-    const scatterData = useMemo(() => {
+        return data.filter(d => d.year >= effectiveYearDomain[0] && d.year <= effectiveYearDomain[1]);
+    }, [data, effectiveYearDomain]);
+
+    // Get line chart data for selected metric
+    const lineData = useMemo(() => {
         if (!selectedMetric) return [];
         return filteredData.map(d => ({
-            x: d.x,
-            y: d[selectedMetric],
-            year: d.year
-        })).filter(d => d.y !== null && d.y !== undefined && d.x !== null && d.x !== undefined);
+            year: d.year,
+            value: d[selectedMetric],
+        })).filter(d => d.value !== null && d.value !== undefined && d.year !== null && d.year !== undefined);
     }, [selectedMetric, filteredData]);
-    
-    // Calculate y-domain
+
+    // Calculate x and y domains for the line chart
+    const xDomain = useMemo(() => {
+        if (lineData.length === 0) return [1960, 2024];
+        const [minX, maxX] = d3.extent(lineData, d => d.year);
+        return [minX || 1960, maxX || 2024];
+    }, [lineData]);
+
     const yDomain = useMemo(() => {
-        if (scatterData.length === 0) return [0, 1];
-        const [minY, maxY] = d3.extent(scatterData, d => d.y);
+        if (lineData.length === 0) return [0, 1];
+        const [minY, maxY] = d3.extent(lineData, d => d.value);
         const padding = (maxY - minY) * 0.1;
         return [
             minY !== undefined ? minY - padding : 0,
             maxY !== undefined ? maxY + padding : 1
         ];
-    }, [scatterData]);
-    
-    // Generate regression curve points
-    const regressionPoints = useMemo(() => {
-        if (!selectedMetric || !regressionForMetric) return [];
-        return generateRegressionPoints(
-            regressionForMetric.best_model,
-            regressionForMetric,
-            effectiveXDomain,
-            100
-        );
-    }, [selectedMetric, regressionForMetric, effectiveXDomain]);
-    
+    }, [lineData]);
+
     // X and Y scales
     const xScale = useMemo(() => {
         return d3
             .scaleLinear()
-            .domain([effectiveXDomain[0], effectiveXDomain[1]])
+            .domain([effectiveYearDomain[0], effectiveYearDomain[1]])
             .range([0, boundsWidth]);
-    }, [effectiveXDomain, boundsWidth]);
-    
+    }, [effectiveYearDomain, boundsWidth]);
+
     const yScale = useMemo(() => {
         return d3
             .scaleLinear()
             .domain(yDomain)
             .range([boundsHeight, 0]);
     }, [yDomain, boundsHeight]);
-    
+
+    // Line generator
+    const lineBuilder = useMemo(() => {
+        return d3
+            .line()
+            .x(d => xScale(d.year))
+            .y(d => yScale(d.value))
+            .defined(d => d.value !== null && d.value !== undefined);
+    }, [xScale, yScale]);
+
     // Color for selected metric
     const metricColor = useMemo(() => {
         if (!selectedMetric) return COLORS[0];
         const category = getCategoryFromName(selectedMetric);
         return CATEGORY_COLORS[category] || COLORS[seriesKeys.indexOf(selectedMetric) % 10];
     }, [selectedMetric, seriesKeys]);
-    
+
     // Handle metric selection
     const handleSelectMetric = useCallback((metric) => {
         setSelectedMetric(prev => prev === metric ? null : metric);
     }, []);
-    
+
     const clearSelection = useCallback(() => {
         setSelectedMetric(null);
     }, []);
-    
+
     // Get best model for each metric
     const metricToModel = useMemo(() => {
         const map = {};
@@ -474,7 +427,7 @@ export const ScatterplotWithRegression = ({
         });
         return map;
     }, [regressionResults]);
-    
+
     // Check if a metric's model matches selected model types
     const matchesModelFilter = useCallback((metricName) => {
         const model = metricToModel[metricName];
@@ -485,7 +438,7 @@ export const ScatterplotWithRegression = ({
             return models && models.includes(model);
         });
     }, [selectedModelTypes, metricToModel, MODEL_TYPES]);
-    
+
     // Filter and sort metric list
     const filteredSeriesKeys = useMemo(() => {
         let result = seriesKeys.filter(key => {
@@ -508,16 +461,13 @@ export const ScatterplotWithRegression = ({
         }
         
         return result;
-    }, [seriesKeys, searchQuery, sortBy, regressionResults, selectedCategories, selectedModelTypes, matchesModelFilter]);
+    }, [seriesKeys, searchQuery, sortBy, regressionResults, selectedCategories, selectedModelTypes, matchesModelFilter, metricToCategory]);
     
 
-    
     // Format functions
-    const formatGDP = (value) => {
+    const formatYear = (value) => {
         if (value === null || value === undefined) return 'N/A';
-        if (value >= 1000000) return `${(value / 1000000).toFixed(2)}M`;
-        if (value >= 1000) return `${(value / 1000).toFixed(1)}K`;
-        return `${value.toFixed(2)}`;
+        return `${Math.round(value)}`;
     };
     
     const formatValue = (value) => {
@@ -528,9 +478,7 @@ export const ScatterplotWithRegression = ({
         if (Math.abs(value) >= 0.01) return value.toFixed(3);
         return value.toFixed(4);
     };
-    
-    const getDisplayName = (name) => name.replace(/_/g, ' ');
-    
+
     return (
         <div ref={containerRef} className="flex flex-col md:flex-row gap-4 relative" style={{ width, height, fontFamily: FONT_FAMILY }}>
             {/* Main Chart Area */}
@@ -602,25 +550,22 @@ export const ScatterplotWithRegression = ({
                             ))}
                         </g>
                         
-                        {/* Regression line */}
-                        {regressionPoints.length > 0 && regressionForMetric && regressionForMetric.best_model !== 'other' && (
+                        {/* Line chart */}
+                        {lineData.length > 0 && (
                             <path
-                                d={d3.line()
-                                    .x(d => xScale(d.x))
-                                    .y(d => yScale(d.y))(regressionPoints)}
+                                d={lineBuilder(lineData)}
                                 fill="none"
-                                stroke="#8627ce"
+                                stroke={metricColor}
                                 strokeWidth={3}
-                                strokeDasharray="5,5"
                             />
                         )}
                         
-                        {/* Scatter points */}
-                        {scatterData.map((point, i) => (
+                        {/* Data points on line */}
+                        {lineData.map((point, i) => (
                             <circle
                                 key={i}
-                                cx={xScale(point.x)}
-                                cy={yScale(point.y)}
+                                cx={xScale(point.year)}
+                                cy={yScale(point.value)}
                                 r={6}
                                 fill={"black"}
                                 fillOpacity={0.7}
@@ -638,7 +583,7 @@ export const ScatterplotWithRegression = ({
                             showVerticalGrid={false}
                             labelFontSize={axisLabelFontSize}
                             tickFontSize={tickFontSize}
-                            tickFormat={formatGDP}
+                            tickFormat={formatYear}
                         />
                         <AxisLeft 
                             yScale={yScale} 
@@ -652,29 +597,27 @@ export const ScatterplotWithRegression = ({
                     </g>
                 </svg>
                 
-                {/* Slider - GDP range */}
+                {/* Slider - Year range */}
                 <div className="mt-4 px-2 flex items-center gap-4">
                     <Slider
-                        value={effectiveXDomain}
-                        min={gdpRange[0]}
-                        max={gdpRange[1]}
-                        onChange={setXDomain}
-                        label="GDP per capita range"
-                        unit="$USD"
+                        value={effectiveYearDomain}
+                        min={yearRange[0]}
+                        max={yearRange[1]}
+                        onChange={setYearDomain}
+                        label="Year range"
+                        unit=""
                     />
                     <button
                         onClick={() => {
                             if (selectedMetric) {
                                 const metricData = data.filter(d => d[selectedMetric] !== null && d[selectedMetric] !== undefined);
-                                const metricX = metricData.map(d => d.x).filter(x => x != null);
-                                if (metricX.length > 0) {
-                                    setXDomain(d3.extent(metricX));
+                                const metricYears = metricData.map(d => d.year).filter(y => y != null);
+                                if (metricYears.length > 0) {
+                                    setYearDomain(d3.extent(metricYears));
                                     return;
                                 }
-                                setXDomain(gdpRange);  // ← Now inside the if(selectedMetric) block
-                            } else {
-                                setXDomain(gdpRange);
                             }
+                            setYearDomain(yearRange);
                         }}
                         className="px-3 py-1 text-xs bg-gray-100 rounded hover:bg-gray-200 transition-colors whitespace-nowrap"
                         style={{ fontFamily: FONT_FAMILY }}
@@ -915,7 +858,7 @@ export const ScatterplotWithRegression = ({
 /**
  * Responsive wrapper
  */
-export const ResponsiveScatterplotWithRegression = ({ width = 800, height = 500, ...props }) => {
+export const ResponsiveLineChartWithMetrics = ({ width = 800, height = 500, ...props }) => {
     const chartRef = useRef(null);
     const chartSize = useDimensions(chartRef);
     
@@ -924,7 +867,7 @@ export const ResponsiveScatterplotWithRegression = ({ width = 800, height = 500,
     
     return (
         <div ref={chartRef} style={{ width: '100%', height: '100%' }}>
-            <ScatterplotWithRegression
+            <LineChartWithMetrics
                 width={finalWidth}
                 height={finalHeight}
                 {...props}
@@ -933,4 +876,4 @@ export const ResponsiveScatterplotWithRegression = ({ width = 800, height = 500,
     );
 };
 
-export default ScatterplotWithRegression;
+export default LineChartWithMetrics;

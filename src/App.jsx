@@ -4,14 +4,25 @@
  * Uses SingleMetricExplorer for single-metric-at-a-time visualization
  */
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import { ResponsiveScatterplotWithRegression } from './components/charts/ScatterplotWithRegression';
-import { loadSwissMetrics, loadRegressionResults, loadMetricsByCategory } from './lib/data-loader';
+import { ResponsiveLineChartWithMetrics } from './components/charts/LineChartWithMetrics';
+import { loadSwissMetrics, loadRegressionResults, loadMetricsByCategory, loadMetadata } from './lib/data-loader';
 
 // Custom color scale for different categories
 import * as d3 from 'd3';
 
 export default function App() {
+    const [chartType, setChartType] = useState('scatter'); // 'scatter' or 'line'
+    // Shared right pane state
+    const [selectedMetric, setSelectedMetric] = useState(null);
+    const [searchQuery, setSearchQuery] = useState('');
+    const [sortBy, setSortBy] = useState('alphabetical');
+    const [selectedCategories, setSelectedCategories] = useState([]);
+    const [selectedModelTypes, setSelectedModelTypes] = useState([]);
+    const [paneWidth, setPaneWidth] = useState(200);
+    const [metadata, setMetadata] = useState([]);
+    
     const [metricsData, setMetricsData] = useState({ data: [], seriesKeys: [] });
     const [regressionResults, setRegressionResults] = useState([]);
     const [categories, setCategories] = useState({});
@@ -28,10 +39,18 @@ export default function App() {
                 const swissMetrics = await loadSwissMetrics();
                 const regression = await loadRegressionResults();
                 const cats = await loadMetricsByCategory();
+                const meta = await loadMetadata();
                 
                 setMetricsData(swissMetrics);
                 setRegressionResults(regression);
                 setCategories(cats);
+                setMetadata(meta);
+                
+                // Initialize filters
+                const allCategories = [...new Set(meta.map(m => m.category).filter(c => c))];
+                setSelectedCategories(allCategories);
+                setSelectedModelTypes(['Constant', 'Linear', 'Saturating', 'Undefined']);
+                
                 setError(null);
             } catch (err) {
                 setError(err.message);
@@ -99,19 +118,83 @@ export default function App() {
                 </div>
             </header>
 
+            {/* Chart Type Toggle */}
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-2">
+                <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-2 flex gap-2">
+                    <button
+                        onClick={() => setChartType('scatter')}
+                        className={`px-4 py-2 text-sm font-medium rounded transition-colors ${
+                            chartType === 'scatter' 
+                                ? 'bg-blue-500 text-white' 
+                                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                        }`}
+                    >
+                        Scatter plot (Metric vs GDP)
+                    </button>
+                    <button
+                        onClick={() => setChartType('line')}
+                        className={`px-4 py-2 text-sm font-medium rounded transition-colors ${
+                            chartType === 'line' 
+                                ? 'bg-blue-500 text-white' 
+                                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                        }`}
+                    >
+                        Line chart (Metric yearly value)
+                    </button>
+                </div>
+            </div>
+
             {/* Main Content */}
             <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
                 {/* Chart */}
                 <div className="bg-white rounded-lg shadow-sm border border-gray-200">
-                    <ResponsiveScatterplotWithRegression
-                        data={metricsData.data}
-                        seriesKeys={metricsData.seriesKeys}
-                        regressionResults={regressionResults}
-                        xAxisLabel="GDP per capita ($USD)"
-                        yAxisLabel="Metric Value"
-                        title="Swiss Metrics Explorer"
-                        style={{ minHeight: '600px' }}
-                    />
+                    {chartType === 'scatter' ? (
+                        <ResponsiveScatterplotWithRegression
+                            data={metricsData.data}
+                            seriesKeys={metricsData.seriesKeys}
+                            regressionResults={regressionResults}
+                            metadata={metadata}
+                            selectedMetric={selectedMetric}
+                            onSelectMetric={setSelectedMetric}
+                            searchQuery={searchQuery}
+                            onSearchChange={setSearchQuery}
+                            sortBy={sortBy}
+                            onSortChange={setSortBy}
+                            selectedCategories={selectedCategories}
+                            onCategoriesChange={setSelectedCategories}
+                            selectedModelTypes={selectedModelTypes}
+                            onModelTypesChange={setSelectedModelTypes}
+                            paneWidth={paneWidth}
+                            onPaneWidthChange={setPaneWidth}
+                            xAxisLabel="GDP per capita ($USD)"
+                            yAxisLabel="Metric Value"
+                            title="Swiss Metrics Explorer"
+                            style={{ minHeight: '600px' }}
+                        />
+                    ) : (
+                        <ResponsiveLineChartWithMetrics
+                            data={metricsData.data}
+                            seriesKeys={metricsData.seriesKeys}
+                            regressionResults={regressionResults}
+                            metadata={metadata}
+                            selectedMetric={selectedMetric}
+                            onSelectMetric={setSelectedMetric}
+                            searchQuery={searchQuery}
+                            onSearchChange={setSearchQuery}
+                            sortBy={sortBy}
+                            onSortChange={setSortBy}
+                            selectedCategories={selectedCategories}
+                            onCategoriesChange={setSelectedCategories}
+                            selectedModelTypes={selectedModelTypes}
+                            onModelTypesChange={setSelectedModelTypes}
+                            paneWidth={paneWidth}
+                            onPaneWidthChange={setPaneWidth}
+                            xAxisLabel="Year"
+                            yAxisLabel="Metric Value"
+                            title="Swiss Metrics Explorer"
+                            style={{ minHeight: '600px' }}
+                        />
+                    )}
                 </div>
 
                 {/* Info Panel */}
