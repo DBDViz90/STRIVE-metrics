@@ -3936,5 +3936,71 @@
     "metric_description": "GDP per capita (current US$) from World Bank",
     "scale_min": null,
     "scale_max": null
+  },
+  {
+    "metric_id": 359,
+    "database_name": "OFS",
+    "acronym": "OFS_D\u00e9penses_de_sant\u00e9_par_habitant",
+    "full_name": "OFS_D\u00e9penses de sant\u00e9 par habitant",
+    "unit": "CHF/month",
+    "category": "Wellbeing",
+    "metric_description": "OFS: D\u00e9penses de sant\u00e9 par habitant",
+    "scale_min": null,
+    "scale_max": null
+  },
+  {
+    "metric_id": 360,
+    "database_name": "OFS",
+    "acronym": "OFS_Heures_effectives_de_travail_par_rapport_\u00e0_1990",
+    "full_name": "OFS_Heures effectives de travail par rapport \u00e0 1990",
+    "unit": "Indice par rapport \u00e0 1990",
+    "category": "Wellbeing",
+    "metric_description": "OFS: Heures effectives de travail par rapport \u00e0 1990",
+    "scale_min": null,
+    "scale_max": null
+  },
+  {
+    "metric_id": 361,
+    "database_name": "OFS",
+    "acronym": "OFS_Taux_dactivit\u00e9_des_15_64_ans",
+    "full_name": "OFS_Taux d'activit\u00e9 des 15-64 ans",
+    "unit": "Moyennes trimestrielles, en %",
+    "category": "Wellbeing",
+    "metric_description": "OFS: Taux d'activit\u00e9 des 15-64 ans",
+    "scale_min": null,
+    "scale_max": null
+  },
+  {
+    "metric_id": 362,
+    "database_name": "OFS",
+    "acronym": "OFS_Taux_de_ch\u00f4mage_des_15_64_au_sens_du_BIT",
+    "full_name": "OFS_Taux de ch\u00f4mage des 15-64 au sens du BIT",
+    "unit": "Moyennes trimestrielles, en %",
+    "category": "Wellbeing",
+    "metric_description": "OFS: Taux de ch\u00f4mage des 15-64 au sens du BIT",
+    "scale_min": null,
+    "scale_max": null
+  },
+  {
+    "metric_id": 363,
+    "database_name": "OFS",
+    "acronym": "OFS_Esp\u00e9rance_de_vie_\u00e0_la_naissance___Hommes",
+    "full_name": "OFS_Esp\u00e9rance de vie \u00e0 la naissance - Hommes",
+    "unit": "Ann\u00e9es",
+    "category": "Wellbeing",
+    "metric_description": "OFS: Esp\u00e9rance de vie \u00e0 la naissance - Hommes",
+    "scale_min": null,
+    "scale_max": null
+  },
+  {
+    "metric_id": 364,
+    "database_name": "OFS",
+    "acronym": "OFS_Esp\u00e9rance_de_vie_\u00e0_la_naissance___Femmes",
+    "full_name": "OFS_Esp\u00e9rance de vie \u00e0 la naissance - Femmes",
+    "unit": "Ann\u00e9es",
+    "category": "Wellbeing",
+    "metric_description": "OFS: Esp\u00e9rance de vie \u00e0 la naissance - Femmes",
+    "scale_min": null,
+    "scale_max": null
   }
 ]

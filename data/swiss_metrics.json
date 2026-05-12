@@ -30,7 +30,8 @@
       "WISE_Net migration": 22356.0,
       "WISE_International migrant stock, total": 714235.0,
       "WISE_Age dependency ratio": 52.12558765709522,
-      "POP_Resident Permanent Population": 5360000.0
+      "POP_Resident Permanent Population": 5360000.0,
+      "OFS_D\u00e9penses de sant\u00e9 par habitant": 31.1640788154703
     },
     {
       "x": 4036.5035964798967,
@@ -74,7 +75,10 @@
       "WISE_Agricultural raw materials imports": 3.942969131387329,
       "WISE_Ores and metals imports": 4.622384588485421,
       "POP_Resident Permanent Population": 6193000.0,
-      "GDP_GDP (current US$)": 24998066773.382114
+      "GDP_GDP (current US$)": 24998066773.382114,
+      "OFS_D\u00e9penses de sant\u00e9 par habitant": 72.8181976520013,
+      "OFS_Esp\u00e9rance de vie \u00e0 la naissance - Hommes": 70.1,
+      "OFS_Esp\u00e9rance de vie \u00e0 la naissance - Femmes": 76.1
     },
     {
       "x": 19346.172059984216,
@@ -128,7 +132,10 @@
       "WISE_Agricultural raw materials imports": 2.602252039043037,
       "WISE_Ores and metals imports": 7.086719653305479,
       "POP_Resident Permanent Population": 6335000.0,
-      "GDP_GDP (current US$)": 122557843886.13715
+      "GDP_GDP (current US$)": 122557843886.13715,
+      "OFS_D\u00e9penses de sant\u00e9 par habitant": 179.273540797793,
+      "OFS_Esp\u00e9rance de vie \u00e0 la naissance - Hommes": 72.3,
+      "OFS_Esp\u00e9rance de vie \u00e0 la naissance - Femmes": 78.8
     },
     {
       "x": 39366.61235372537,
@@ -277,7 +284,10 @@
       "SPI2023_Years of tertiary schooling": 25.52,
       "SPI2023_Gender parity in advanced education": 97.84,
       "POP_Resident Permanent Population": 6751000.0,
-      "GDP_GDP (current US$)": 265763573999.42413
+      "GDP_GDP (current US$)": 265763573999.42413,
+      "OFS_D\u00e9penses de sant\u00e9 par habitant": 333.997280314537,
+      "OFS_Esp\u00e9rance de vie \u00e0 la naissance - Hommes": 74.0,
+      "OFS_Esp\u00e9rance de vie \u00e0 la naissance - Femmes": 80.8
     },
     {
       "x": 49962.6168224299,
@@ -525,7 +535,13 @@
       "SPI2023_Years of tertiary schooling": 31.26,
       "SPI2023_Gender parity in advanced education": 98.48,
       "POP_Resident Permanent Population": 7062000.0,
-      "GDP_GDP (current US$)": 352835806342.4947
+      "GDP_GDP (current US$)": 352835806342.4947,
+      "OFS_D\u00e9penses de sant\u00e9 par habitant": 426.236342325845,
+      "OFS_Heures effectives de travail par rapport \u00e0 1990": 97.3,
+      "OFS_Taux d'activit\u00e9 des 15-64 ans": 79.4102719562,
+      "OFS_Taux de ch\u00f4mage des 15-64 au sens du BIT": 3.3947911217,
+      "OFS_Esp\u00e9rance de vie \u00e0 la naissance - Hommes": 75.3,
+      "OFS_Esp\u00e9rance de vie \u00e0 la naissance - Femmes": 81.8
     },
     {
       "x": 48030.50416607824,
@@ -763,7 +779,13 @@
       "SPI2023_Years of tertiary schooling": 32.32,
       "SPI2023_Gender parity in advanced education": 98.57000000000001,
       "POP_Resident Permanent Population": 7081000.0,
-      "GDP_GDP (current US$)": 340103959546.9256
+      "GDP_GDP (current US$)": 340103959546.9256,
+      "OFS_D\u00e9penses de sant\u00e9 par habitant": 444.558012753561,
+      "OFS_Heures effectives de travail par rapport \u00e0 1990": 95.8,
+      "OFS_Taux d'activit\u00e9 des 15-64 ans": 79.9875203818,
+      "OFS_Taux de ch\u00f4mage des 15-64 au sens du BIT": 3.7454521482,
+      "OFS_Esp\u00e9rance de vie \u00e0 la naissance - Hommes": 76.0,
+      "OFS_Esp\u00e9rance de vie \u00e0 la naissance - Femmes": 82.0
     },
     {
       "x": 41542.84103720406,
@@ -997,7 +1019,13 @@
       "SPI2023_Years of tertiary schooling": 33.77,
       "SPI2023_Gender parity in advanced education": 98.60000000000001,
       "POP_Resident Permanent Population": 7096000.0,
-      "GDP_GDP (current US$)": 294788198856.1979
+      "GDP_GDP (current US$)": 294788198856.1979,
+      "OFS_D\u00e9penses de sant\u00e9 par habitant": 452.548671916343,
+      "OFS_Heures effectives de travail par rapport \u00e0 1990": 95.1,
+      "OFS_Taux d'activit\u00e9 des 15-64 ans": 80.2551969265,
+      "OFS_Taux de ch\u00f4mage des 15-64 au sens du BIT": 4.2048088439,
+      "OFS_Esp\u00e9rance de vie \u00e0 la naissance - Hommes": 76.3,
+      "OFS_Esp\u00e9rance de vie \u00e0 la naissance - Femmes": 82.1
     },
     {
       "x": 42599.483936140154,
@@ -1234,7 +1262,13 @@
       "SPI2023_Years of tertiary schooling": 35.22,
       "SPI2023_Gender parity in advanced education": 98.57000000000001,
       "POP_Resident Permanent Population": 7123537.0,
-      "GDP_GDP (current US$)": 303459014346.80646
+      "GDP_GDP (current US$)": 303459014346.80646,
+      "OFS_D\u00e9penses de sant\u00e9 par habitant": 469.149559892857,
+      "OFS_Heures effectives de travail par rapport \u00e0 1990": 96.8,
+      "OFS_Taux d'activit\u00e9 des 15-64 ans": 81.0024346657,
+      "OFS_Taux de ch\u00f4mage des 15-64 au sens du BIT": 3.6586498402,
+      "OFS_Esp\u00e9rance de vie \u00e0 la naissance - Hommes": 76.3,
+      "OFS_Esp\u00e9rance de vie \u00e0 la naissance - Femmes": 82.5
     },
     {
       "x": 41579.28531546622,
@@ -1471,7 +1505,13 @@
       "SPI2023_Years of tertiary schooling": 36.93,
       "SPI2023_Gender parity in advanced education": 98.72,
       "POP_Resident Permanent Population": 7164000.0,
-      "GDP_GDP (current US$)": 297873643323.1261
+      "GDP_GDP (current US$)": 297873643323.1261,
+      "OFS_D\u00e9penses de sant\u00e9 par habitant": 481.515602698392,
+      "OFS_Heures effectives de travail par rapport \u00e0 1990": 98.9,
+      "OFS_Taux d'activit\u00e9 des 15-64 ans": 80.9121506127,
+      "OFS_Taux de ch\u00f4mage des 15-64 au sens du BIT": 3.071749908,
+      "OFS_Esp\u00e9rance de vie \u00e0 la naissance - Hommes": 76.8,
+      "OFS_Esp\u00e9rance de vie \u00e0 la naissance - Femmes": 82.5
     },
     {
       "x": 38758.46751804553,
@@ -1738,7 +1778,13 @@
       "SPI2023_Years of tertiary schooling": 37.71,
       "SPI2023_Gender parity in advanced education": 98.66,
       "POP_Resident Permanent Population": 7204000.0,
-      "GDP_GDP (current US$)": 279216033870.2037
+      "GDP_GDP (current US$)": 279216033870.2037,
+      "OFS_D\u00e9penses de sant\u00e9 par habitant": 499.001686658586,
+      "OFS_Heures effectives de travail par rapport \u00e0 1990": 99.6,
+      "OFS_Taux d'activit\u00e9 des 15-64 ans": 80.5160433732,
+      "OFS_Taux de ch\u00f4mage des 15-64 au sens du BIT": 2.7046438209,
+      "OFS_Esp\u00e9rance de vie \u00e0 la naissance - Hommes": 76.9,
+      "OFS_Esp\u00e9rance de vie \u00e0 la naissance - Femmes": 82.6
     },
     {
       "x": 39496.0033076075,
@@ -1980,7 +2026,13 @@
       "SPI2023_Years of tertiary schooling": 39.71,
       "SPI2023_Gender parity in advanced education": 98.55,
       "POP_Resident Permanent Population": 7256000.0,
-      "GDP_GDP (current US$)": 286582672434.22614
+      "GDP_GDP (current US$)": 286582672434.22614,
+      "OFS_D\u00e9penses de sant\u00e9 par habitant": 526.957883913939,
+      "OFS_Heures effectives de travail par rapport \u00e0 1990": 98.9,
+      "OFS_Taux d'activit\u00e9 des 15-64 ans": 81.1971441509,
+      "OFS_Taux de ch\u00f4mage des 15-64 au sens du BIT": 2.5235896822,
+      "OFS_Esp\u00e9rance de vie \u00e0 la naissance - Hommes": 77.4,
+      "OFS_Esp\u00e9rance de vie \u00e0 la naissance - Femmes": 83.1
     },
     {
       "x": 42288.898003828275,
@@ -2226,7 +2278,13 @@
       "SPI2023_Years of tertiary schooling": 37.33,
       "SPI2023_Gender parity in advanced education": 98.67,
       "POP_Resident Permanent Population": 7314000.0,
-      "GDP_GDP (current US$)": 309301422430.3862
+      "GDP_GDP (current US$)": 309301422430.3862,
+      "OFS_D\u00e9penses de sant\u00e9 par habitant": 544.179828364769,
+      "OFS_Heures effectives de travail par rapport \u00e0 1990": 98.3,
+      "OFS_Taux d'activit\u00e9 des 15-64 ans": 81.3104345225,
+      "OFS_Taux de ch\u00f4mage des 15-64 au sens du BIT": 2.9945216109,
+      "OFS_Esp\u00e9rance de vie \u00e0 la naissance - Hommes": 77.8,
+      "OFS_Esp\u00e9rance de vie \u00e0 la naissance - Femmes": 83.1
     },
     {
       "x": 49168.25095057034,
@@ -2468,7 +2526,13 @@
       "SPI2023_Years of tertiary schooling": 40.52,
       "SPI2023_Gender parity in advanced education": 98.77,
       "POP_Resident Permanent Population": 7364000.0,
-      "GDP_GDP (current US$)": 362075086507.7597
+      "GDP_GDP (current US$)": 362075086507.7597,
+      "OFS_D\u00e9penses de sant\u00e9 par habitant": 560.562868241,
+      "OFS_Heures effectives de travail par rapport \u00e0 1990": 98.7,
+      "OFS_Taux d'activit\u00e9 des 15-64 ans": 81.3417747532,
+      "OFS_Taux de ch\u00f4mage des 15-64 au sens du BIT": 4.2084821207,
+      "OFS_Esp\u00e9rance de vie \u00e0 la naissance - Hommes": 78.0,
+      "OFS_Esp\u00e9rance de vie \u00e0 la naissance - Femmes": 83.2
     },
     {
       "x": 54471.67146183559,
@@ -2712,7 +2776,13 @@
       "SPI2023_Years of tertiary schooling": 42.44,
       "SPI2023_Gender parity in advanced education": 98.85000000000001,
       "POP_Resident Permanent Population": 7415102.0,
-      "GDP_GDP (current US$)": 403912891033.37354
+      "GDP_GDP (current US$)": 403912891033.37354,
+      "OFS_D\u00e9penses de sant\u00e9 par habitant": 578.483007925491,
+      "OFS_Heures effectives de travail par rapport \u00e0 1990": 100.8,
+      "OFS_Taux d'activit\u00e9 des 15-64 ans": 80.9642874673,
+      "OFS_Taux de ch\u00f4mage des 15-64 au sens du BIT": 4.4072178985,
+      "OFS_Esp\u00e9rance de vie \u00e0 la naissance - Hommes": 78.6,
+      "OFS_Esp\u00e9rance de vie \u00e0 la naissance - Femmes": 83.7
     },
     {
       "x": 56076.930171998654,
@@ -2971,7 +3041,13 @@
       "SPI2023_Years of tertiary schooling": 42.980000000000004,
       "SPI2023_Gender parity in advanced education": 98.98,
       "POP_Resident Permanent Population": 7459128.0,
-      "GDP_GDP (current US$)": 418284865884.99835
+      "GDP_GDP (current US$)": 418284865884.99835,
+      "OFS_D\u00e9penses de sant\u00e9 par habitant": 586.289577130138,
+      "OFS_Heures effectives de travail par rapport \u00e0 1990": 101.2,
+      "OFS_Taux d'activit\u00e9 des 15-64 ans": 80.851488175,
+      "OFS_Taux de ch\u00f4mage des 15-64 au sens du BIT": 4.5208333249,
+      "OFS_Esp\u00e9rance de vie \u00e0 la naissance - Hommes": 78.7,
+      "OFS_Esp\u00e9rance de vie \u00e0 la naissance - Femmes": 83.9
     },
     {
       "x": 58816.134107204954,
@@ -3228,7 +3304,13 @@
       "SPI2023_Years of tertiary schooling": 43.78,
       "SPI2023_Gender parity in advanced education": 99.15,
       "POP_Resident Permanent Population": 7508739.0,
-      "GDP_GDP (current US$)": 441634672196.5226
+      "GDP_GDP (current US$)": 441634672196.5226,
+      "OFS_D\u00e9penses de sant\u00e9 par habitant": 589.956164614763,
+      "OFS_Heures effectives de travail par rapport \u00e0 1990": 102.8,
+      "OFS_Taux d'activit\u00e9 des 15-64 ans": 81.2432761594,
+      "OFS_Taux de ch\u00f4mage des 15-64 au sens du BIT": 4.0684087417,
+      "OFS_Esp\u00e9rance de vie \u00e0 la naissance - Hommes": 79.1,
+      "OFS_Esp\u00e9rance de vie \u00e0 la naissance - Femmes": 84.0
     },
     {
       "x": 64626.50790268617,
@@ -3476,7 +3558,13 @@
       "SPI2023_Years of tertiary schooling": 44.82,
       "SPI2023_Gender parity in advanced education": 99.26,
       "POP_Resident Permanent Population": 7593494.0,
-      "GDP_GDP (current US$)": 490740715594.80176
+      "GDP_GDP (current US$)": 490740715594.80176,
+      "OFS_D\u00e9penses de sant\u00e9 par habitant": 611.44906548813,
+      "OFS_Heures effectives de travail par rapport \u00e0 1990": 104.8,
+      "OFS_Taux d'activit\u00e9 des 15-64 ans": 81.6186278854,
+      "OFS_Taux de ch\u00f4mage des 15-64 au sens du BIT": 3.7105640788,
+      "OFS_Esp\u00e9rance de vie \u00e0 la naissance - Hommes": 79.4,
+      "OFS_Esp\u00e9rance de vie \u00e0 la naissance - Femmes": 84.2
     },
     {
       "x": 73653.41548842253,
@@ -3727,7 +3815,13 @@
       "SPI2023_Years of tertiary schooling": 46.53,
       "SPI2023_Gender parity in advanced education": 99.43,
       "POP_Resident Permanent Population": 7701856.0,
-      "GDP_GDP (current US$)": 567267767519.158
+      "GDP_GDP (current US$)": 567267767519.158,
+      "OFS_D\u00e9penses de sant\u00e9 par habitant": 637.3532705187,
+      "OFS_Heures effectives de travail par rapport \u00e0 1990": 106.7,
+      "OFS_Taux d'activit\u00e9 des 15-64 ans": 82.311863942,
+      "OFS_Taux de ch\u00f4mage des 15-64 au sens du BIT": 3.4124270771,
+      "OFS_Esp\u00e9rance de vie \u00e0 la naissance - Hommes": 79.7,
+      "OFS_Esp\u00e9rance de vie \u00e0 la naissance - Femmes": 84.4
     },
     {
       "x": 71182.4825843336,
@@ -3986,7 +4080,13 @@
       "SPI2023_Years of tertiary schooling": 47.79,
       "SPI2023_Gender parity in advanced education": 99.63,
       "POP_Resident Permanent Population": 7785806.0,
-      "GDP_GDP (current US$)": 554212916092.2709
+      "GDP_GDP (current US$)": 554212916092.2709,
+      "OFS_D\u00e9penses de sant\u00e9 par habitant": 657.318290054953,
+      "OFS_Heures effectives de travail par rapport \u00e0 1990": 106.6,
+      "OFS_Taux d'activit\u00e9 des 15-64 ans": 82.4935912439,
+      "OFS_Taux de ch\u00f4mage des 15-64 au sens du BIT": 4.2092676358,
+      "OFS_Esp\u00e9rance de vie \u00e0 la naissance - Hommes": 79.8,
+      "OFS_Esp\u00e9rance de vie \u00e0 la naissance - Femmes": 84.4
     },
     {
       "x": 76091.58878362173,
@@ -4260,7 +4360,13 @@
       "SPI2023_Years of tertiary schooling": 50.22,
       "SPI2023_Gender parity in advanced education": 99.86,
       "POP_Resident Permanent Population": 7870134.0,
-      "GDP_GDP (current US$)": 598851028906.5803
+      "GDP_GDP (current US$)": 598851028906.5803,
+      "OFS_D\u00e9penses de sant\u00e9 par habitant": 665.481004315833,
+      "OFS_Heures effectives de travail par rapport \u00e0 1990": 107.0,
+      "OFS_Taux d'activit\u00e9 des 15-64 ans": 81.2996759946,
+      "OFS_Taux de ch\u00f4mage des 15-64 au sens du BIT": 4.9226180112,
+      "OFS_Esp\u00e9rance de vie \u00e0 la naissance - Hommes": 80.2,
+      "OFS_Esp\u00e9rance de vie \u00e0 la naissance - Femmes": 84.6
     },
     {
       "x": 89996.0300010233,
@@ -4575,7 +4681,13 @@
       "SPI2023_Gender parity in advanced education": 100.0,
       "POP_Resident Permanent Population": 7954662.0,
       "GDP_GDP per capita (constant 2021 international dollars)": 73366.58600000001,
-      "GDP_GDP (current US$)": 715888126682.3959
+      "GDP_GDP (current US$)": 715888126682.3959,
+      "OFS_D\u00e9penses de sant\u00e9 par habitant": 677.554603758136,
+      "OFS_Heures effectives de travail par rapport \u00e0 1990": 109.6,
+      "OFS_Taux d'activit\u00e9 des 15-64 ans": 82.0510327162,
+      "OFS_Taux de ch\u00f4mage des 15-64 au sens du BIT": 4.5181112603,
+      "OFS_Esp\u00e9rance de vie \u00e0 la naissance - Hommes": 80.3,
+      "OFS_Esp\u00e9rance de vie \u00e0 la naissance - Femmes": 84.7
     },
     {
       "x": 85385.604784639,
@@ -4900,7 +5012,13 @@
       "SPI2023_Gender parity in advanced education": 100.0,
       "POP_Resident Permanent Population": 8039060.0,
       "GDP_GDP per capita (constant 2021 international dollars)": 74961.3101,
-      "GDP_GDP (current US$)": 686420221557.9899
+      "GDP_GDP (current US$)": 686420221557.9899,
+      "OFS_D\u00e9penses de sant\u00e9 par habitant": 694.058545805244,
+      "OFS_Heures effectives de travail par rapport \u00e0 1990": 110.5,
+      "OFS_Taux d'activit\u00e9 des 15-64 ans": 82.285993781,
+      "OFS_Taux de ch\u00f4mage des 15-64 au sens du BIT": 4.6077119953,
+      "OFS_Esp\u00e9rance de vie \u00e0 la naissance - Hommes": 80.5,
+      "OFS_Esp\u00e9rance de vie \u00e0 la naissance - Femmes": 84.7
     },
     {
       "x": 86764.98971513573,
@@ -5214,7 +5332,13 @@
       "SPI2023_Gender parity in advanced education": 100.0,
       "POP_Resident Permanent Population": 8139631.0,
       "GDP_GDP per capita (constant 2021 international dollars)": 75476.5491,
-      "GDP_GDP (current US$)": 706234937370.9675
+      "GDP_GDP (current US$)": 706234937370.9675,
+      "OFS_D\u00e9penses de sant\u00e9 par habitant": 715.802097339024,
+      "OFS_Heures effectives de travail par rapport \u00e0 1990": 110.4,
+      "OFS_Taux d'activit\u00e9 des 15-64 ans": 82.3981872662,
+      "OFS_Taux de ch\u00f4mage des 15-64 au sens du BIT": 4.8799100283,
+      "OFS_Esp\u00e9rance de vie \u00e0 la naissance - Hommes": 80.5,
+      "OFS_Esp\u00e9rance de vie \u00e0 la naissance - Femmes": 84.8
     },
     {
       "x": 88197.06941262247,
@@ -5538,7 +5662,13 @@
       "SPI2023_Gender parity in advanced education": 100.0,
       "POP_Resident Permanent Population": 8237665.999999999,
       "GDP_GDP per capita (constant 2021 international dollars)": 75560.0236,
-      "GDP_GDP (current US$)": 726537808338.0005
+      "GDP_GDP (current US$)": 726537808338.0005,
+      "OFS_D\u00e9penses de sant\u00e9 par habitant": 724.773582396818,
+      "OFS_Heures effectives de travail par rapport \u00e0 1990": 111.9,
+      "OFS_Taux d'activit\u00e9 des 15-64 ans": 82.8810078475,
+      "OFS_Taux de ch\u00f4mage des 15-64 au sens du BIT": 4.9744872696,
+      "OFS_Esp\u00e9rance de vie \u00e0 la naissance - Hommes": 81.0,
+      "OFS_Esp\u00e9rance de vie \u00e0 la naissance - Femmes": 85.2
     },
     {
       "x": 83356.25040380079,
@@ -5877,7 +6007,13 @@
       "SPI2023_Gender parity in advanced education": 100.0,
       "POP_Resident Permanent Population": 8327126.0,
       "GDP_GDP per capita (constant 2021 international dollars)": 76034.8131,
-      "GDP_GDP (current US$)": 694118186379.6278
+      "GDP_GDP (current US$)": 694118186379.6278,
+      "OFS_D\u00e9penses de sant\u00e9 par habitant": 739.62495977412,
+      "OFS_Heures effectives de travail par rapport \u00e0 1990": 114.5,
+      "OFS_Taux d'activit\u00e9 des 15-64 ans": 83.2879038986,
+      "OFS_Taux de ch\u00f4mage des 15-64 au sens du BIT": 4.9200180337,
+      "OFS_Esp\u00e9rance de vie \u00e0 la naissance - Hommes": 80.7,
+      "OFS_Esp\u00e9rance de vie \u00e0 la naissance - Femmes": 84.9
     },
     {
       "x": 81702.10997024781,
@@ -6147,7 +6283,13 @@
       "SPI2023_Gender parity in advanced education": 100.0,
       "POP_Resident Permanent Population": 8419550.0,
       "GDP_GDP per capita (constant 2021 international dollars)": 76877.8062,
-      "GDP_GDP (current US$)": 687895460902.7133
+      "GDP_GDP (current US$)": 687895460902.7133,
+      "OFS_D\u00e9penses de sant\u00e9 par habitant": 757.546751367256,
+      "OFS_Heures effectives de travail par rapport \u00e0 1990": 116.1,
+      "OFS_Taux d'activit\u00e9 des 15-64 ans": 83.873046354,
+      "OFS_Taux de ch\u00f4mage des 15-64 au sens du BIT": 5.086148653,
+      "OFS_Esp\u00e9rance de vie \u00e0 la naissance - Hommes": 81.5,
+      "OFS_Esp\u00e9rance de vie \u00e0 la naissance - Femmes": 85.3
     },
     {
       "x": 81941.342247231,
@@ -6416,7 +6558,13 @@
       "SPI2023_Gender parity in advanced education": 100.0,
       "POP_Resident Permanent Population": 8484130.0,
       "GDP_GDP per capita (constant 2021 international dollars)": 77257.6823,
-      "GDP_GDP (current US$)": 695200833086.4989
+      "GDP_GDP (current US$)": 695200833086.4989,
+      "OFS_D\u00e9penses de sant\u00e9 par habitant": 770.328372283432,
+      "OFS_Heures effectives de travail par rapport \u00e0 1990": 115.8,
+      "OFS_Taux d'activit\u00e9 des 15-64 ans": 83.9505655427,
+      "OFS_Taux de ch\u00f4mage des 15-64 au sens du BIT": 4.9633151816,
+      "OFS_Esp\u00e9rance de vie \u00e0 la naissance - Hommes": 81.4,
+      "OFS_Esp\u00e9rance de vie \u00e0 la naissance - Femmes": 85.4
     },
     {
       "x": 84916.22766245574,
@@ -6686,7 +6834,13 @@
       "SPI2023_Gender parity in advanced education": 100.0,
       "POP_Resident Permanent Population": 8544527.0,
       "GDP_GDP per capita (constant 2021 international dollars)": 77999.4578,
-      "GDP_GDP (current US$)": 725568717468.0009
+      "GDP_GDP (current US$)": 725568717468.0009,
+      "OFS_D\u00e9penses de sant\u00e9 par habitant": 777.695774834152,
+      "OFS_Heures effectives de travail par rapport \u00e0 1990": 116.5,
+      "OFS_Taux d'activit\u00e9 des 15-64 ans": 84.2076964782,
+      "OFS_Taux de ch\u00f4mage des 15-64 au sens du BIT": 4.8729673576,
+      "OFS_Esp\u00e9rance de vie \u00e0 la naissance - Hommes": 81.7,
+      "OFS_Esp\u00e9rance de vie \u00e0 la naissance - Femmes": 85.4
     },
     {
       "x": 83821.31465217481,
@@ -6900,7 +7054,13 @@
       "SPI2023_Gender parity in advanced education": 100.0,
       "POP_Resident Permanent Population": 8606033.0,
       "GDP_GDP per capita (constant 2021 international dollars)": 78328.0899,
-      "GDP_GDP (current US$)": 721369112726.7239
+      "GDP_GDP (current US$)": 721369112726.7239,
+      "OFS_D\u00e9penses de sant\u00e9 par habitant": 795.987188367805,
+      "OFS_Heures effectives de travail par rapport \u00e0 1990": 117.1,
+      "OFS_Taux d'activit\u00e9 des 15-64 ans": 84.2965914797,
+      "OFS_Taux de ch\u00f4mage des 15-64 au sens du BIT": 4.5223603389,
+      "OFS_Esp\u00e9rance de vie \u00e0 la naissance - Hommes": 81.9,
+      "OFS_Esp\u00e9rance de vie \u00e0 la naissance - Femmes": 85.6
     },
     {
       "x": 85579.3917165496,
@@ -7119,7 +7279,13 @@
       "SPI2023_Gender parity in advanced education": 100.0,
       "POP_Resident Permanent Population": 8670300.0,
       "GDP_GDP per capita (constant 2021 international dollars)": 79977.30720000001,
-      "GDP_GDP (current US$)": 741999406005.6272
+      "GDP_GDP (current US$)": 741999406005.6272,
+      "OFS_D\u00e9penses de sant\u00e9 par habitant": 806.715811740836,
+      "OFS_Heures effectives de travail par rapport \u00e0 1990": 112.8,
+      "OFS_Taux d'activit\u00e9 des 15-64 ans": 84.1054245052,
+      "OFS_Taux de ch\u00f4mage des 15-64 au sens du BIT": 4.9591176796,
+      "OFS_Esp\u00e9rance de vie \u00e0 la naissance - Hommes": 81.0,
+      "OFS_Esp\u00e9rance de vie \u00e0 la naissance - Femmes": 85.1
     },
     {
       "x": 93297.68843310248,
@@ -7265,7 +7431,13 @@
       "SPI2025_Quality weighted universities": 84.28,
       "POP_Resident Permanent Population": 8738791.0,
       "GDP_GDP per capita (constant 2021 international dollars)": 80315.683,
-      "GDP_GDP (current US$)": 813408787222.4987
+      "GDP_GDP (current US$)": 813408787222.4987,
+      "OFS_D\u00e9penses de sant\u00e9 par habitant": 854.287749237836,
+      "OFS_Heures effectives de travail par rapport \u00e0 1990": 116.0,
+      "OFS_Taux d'activit\u00e9 des 15-64 ans": 83.9436071577,
+      "OFS_Taux de ch\u00f4mage des 15-64 au sens du BIT": 5.1732849038,
+      "OFS_Esp\u00e9rance de vie \u00e0 la naissance - Hommes": 81.6,
+      "OFS_Esp\u00e9rance de vie \u00e0 la naissance - Femmes": 85.7
     },
     {
       "x": 93984.43743523397,
@@ -7397,7 +7569,13 @@
       "SPI2025_Quality weighted universities": 84.28,
       "POP_Resident Permanent Population": 8815385.0,
       "GDP_GDP per capita (constant 2021 international dollars)": 78023.3463,
-      "GDP_GDP (current US$)": 818426550206.4498
+      "GDP_GDP (current US$)": 818426550206.4498,
+      "OFS_D\u00e9penses de sant\u00e9 par habitant": 868.567351153367,
+      "OFS_Heures effectives de travail par rapport \u00e0 1990": 118.1,
+      "OFS_Taux d'activit\u00e9 des 15-64 ans": 83.6274317037,
+      "OFS_Taux de ch\u00f4mage des 15-64 au sens du BIT": 4.2440410947,
+      "OFS_Esp\u00e9rance de vie \u00e0 la naissance - Hommes": 81.6,
+      "OFS_Esp\u00e9rance de vie \u00e0 la naissance - Femmes": 85.4
     },
     {
       "x": 99799.06849367649,
@@ -7472,7 +7650,12 @@
       "SPI2025_Quality weighted universities": 84.29,
       "POP_Resident Permanent Population": 8962258.0,
       "GDP_GDP per capita (constant 2021 international dollars)": 81603.20730000001,
-      "GDP_GDP (current US$)": 884940402230.4088
+      "GDP_GDP (current US$)": 884940402230.4088,
+      "OFS_Heures effectives de travail par rapport \u00e0 1990": 120.2,
+      "OFS_Taux d'activit\u00e9 des 15-64 ans": 84.1389175862,
+      "OFS_Taux de ch\u00f4mage des 15-64 au sens du BIT": 4.1458323523,
+      "OFS_Esp\u00e9rance de vie \u00e0 la naissance - Hommes": 82.2,
+      "OFS_Esp\u00e9rance de vie \u00e0 la naissance - Femmes": 85.8
     },
     {
       "x": 103475.96941739995,
@@ -7536,12 +7719,20 @@
       "SPI2025_Quality weighted universities": 84.29,
       "POP_Resident Permanent Population": 9051029.0,
       "GDP_GDP per capita (constant 2021 international dollars)": 83019.84000000001,
-      "GDP_GDP (current US$)": 951454254254.368
+      "GDP_GDP (current US$)": 951454254254.368,
+      "OFS_Taux d'activit\u00e9 des 15-64 ans": 84.116197775,
+      "OFS_Taux de ch\u00f4mage des 15-64 au sens du BIT": 4.4649909813
     }
   ],
   "seriesKeys": [
     "GDP_GDP (current US$)",
     "GDP_GDP per capita (constant 2021 international dollars)",
+    "OFS_D\u00e9penses de sant\u00e9 par habitant",
+    "OFS_Esp\u00e9rance de vie \u00e0 la naissance - Femmes",
+    "OFS_Esp\u00e9rance de vie \u00e0 la naissance - Hommes",
+    "OFS_Heures effectives de travail par rapport \u00e0 1990",
+    "OFS_Taux d'activit\u00e9 des 15-64 ans",
+    "OFS_Taux de ch\u00f4mage des 15-64 au sens du BIT",
     "POP_Resident Permanent Population",
     "SPI2023_Access to electricity",
     "SPI2023_Access to justice",
@@ -7892,7 +8083,7 @@
     "WISE_Years of Schooling"
   ],
   "count": 34,
-  "metricsCount": 350,
+  "metricsCount": 356,
   "xAxisLabel": "GDP per capita (USD)",
   "targetMetric": "GDP_GDP_current_USD_WorldBank_per_capita"
 }
