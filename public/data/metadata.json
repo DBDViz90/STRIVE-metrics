@@ -3900,34 +3900,12 @@
     "full_name": "POP_Resident Permanent Population",
     "unit": "individual",
     "category": "Demographics",
-    "metric_description": "Total resident permanent population of Switzerland",
+    "metric_description": "Total resident permanent population of Switzerland from UN WPP",
     "scale_min": null,
     "scale_max": null
   },
   {
     "metric_id": 356,
-    "database_name": "GDP",
-    "acronym": "GDP_per_capita_constant_2021_international_dollars",
-    "full_name": "GDP_GDP per capita (constant 2021 international dollars)",
-    "unit": "international dollars",
-    "category": "Economy",
-    "metric_description": "GDP per capita measured in constant 2021 international dollars",
-    "scale_min": null,
-    "scale_max": null
-  },
-  {
-    "metric_id": 357,
-    "database_name": "GDP_current_USD",
-    "acronym": "GDP_current_US",
-    "full_name": "GDP_GDP (current US$)",
-    "unit": "US dollars",
-    "category": "Economy",
-    "metric_description": "GDP at current prices in US dollars",
-    "scale_min": null,
-    "scale_max": null
-  },
-  {
-    "metric_id": 358,
     "database_name": "GDP_current_USD_WorldBank",
     "acronym": "GDP_current_USD_WorldBank_per_capita",
     "full_name": "GDP_GDP_current_USD_WorldBank_per_capita",
@@ -3938,7 +3916,18 @@
     "scale_max": null
   },
   {
-    "metric_id": 359,
+    "metric_id": 357,
+    "database_name": "GDP_constant_LCU_WorldBank",
+    "acronym": "GDP_constant_LCU_WorldBank_per_capita",
+    "full_name": "GDP_GDP_constant_LCU_WorldBank_per_capita",
+    "unit": "CHF per capita (constant LCU)",
+    "category": "Economy",
+    "metric_description": "GDP per capita in constant LCU (Swiss Francs) from World Bank",
+    "scale_min": null,
+    "scale_max": null
+  },
+  {
+    "metric_id": 358,
     "database_name": "OFS",
     "acronym": "OFS_D\u00e9penses_de_sant\u00e9_par_habitant",
     "full_name": "OFS_D\u00e9penses de sant\u00e9 par habitant",
@@ -3949,7 +3938,7 @@
     "scale_max": null
   },
   {
-    "metric_id": 360,
+    "metric_id": 359,
     "database_name": "OFS",
     "acronym": "OFS_Heures_effectives_de_travail_par_rapport_\u00e0_1990",
     "full_name": "OFS_Heures effectives de travail par rapport \u00e0 1990",
@@ -3960,7 +3949,7 @@
     "scale_max": null
   },
   {
-    "metric_id": 361,
+    "metric_id": 360,
     "database_name": "OFS",
     "acronym": "OFS_Taux_dactivit\u00e9_des_15_64_ans",
     "full_name": "OFS_Taux d'activit\u00e9 des 15-64 ans",
@@ -3971,7 +3960,7 @@
     "scale_max": null
   },
   {
-    "metric_id": 362,
+    "metric_id": 361,
     "database_name": "OFS",
     "acronym": "OFS_Taux_de_ch\u00f4mage_des_15_64_au_sens_du_BIT",
     "full_name": "OFS_Taux de ch\u00f4mage des 15-64 au sens du BIT",
@@ -3982,7 +3971,7 @@
     "scale_max": null
   },
   {
-    "metric_id": 363,
+    "metric_id": 362,
     "database_name": "OFS",
     "acronym": "OFS_Esp\u00e9rance_de_vie_\u00e0_la_naissance___Hommes",
     "full_name": "OFS_Esp\u00e9rance de vie \u00e0 la naissance - Hommes",
@@ -3993,7 +3982,7 @@
     "scale_max": null
   },
   {
-    "metric_id": 364,
+    "metric_id": 363,
     "database_name": "OFS",
     "acronym": "OFS_Esp\u00e9rance_de_vie_\u00e0_la_naissance___Femmes",
     "full_name": "OFS_Esp\u00e9rance de vie \u00e0 la naissance - Femmes",

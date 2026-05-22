@@ -4,10 +4,12 @@
  */
 import { useState, useMemo, useRef, useCallback, useEffect } from 'react';
 import * as d3 from 'd3';
+import { Delaunay } from 'd3-delaunay';
 import { AxisLeft } from '../Axes/AxisLeft';
 import { AxisBottom } from '../Axes/AxisBottom';
 import { Slider } from '../ui/Slider';
 import { SearchBar } from '../ui/SearchBar';
+import { Tooltip } from '../ui/Tooltip';
 import { useDimensions } from '../../../hooks/use-dimensions';
 
 const FONT_FAMILY = '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
@@ -94,6 +96,8 @@ function getR2Value(regression) {
  * @param {Function} [props.onCategoriesChange] - Callback when categories change
  * @param {Array} [props.selectedModelTypes] - Currently selected model types (controlled)
  * @param {Function} [props.onModelTypesChange] - Callback when model types change
+ * @param {string} [props.selectedPredictorType='CHF_LCU'] - Currently selected predictor type
+ * @param {Function} [props.onPredictorChange] - Callback when predictor type changes
  * @param {number} [props.paneWidth] - Current pane width (controlled)
  * @param {Function} [props.onPaneWidthChange] - Callback when pane width changes
  * @param {string} [props.xAxisLabel='Year'] - Label for x-axis
@@ -115,6 +119,8 @@ export const LineChartWithMetrics = ({
     onCategoriesChange: externalOnCategoriesChange,
     selectedModelTypes: externalSelectedModelTypes,
     onModelTypesChange: externalOnModelTypesChange,
+    selectedPredictorType: externalSelectedPredictorType,
+    onPredictorChange: externalOnPredictorChange,
     paneWidth: externalPaneWidth,
     onPaneWidthChange: externalOnPaneWidthChange,
     xAxisLabel = 'Year',
@@ -140,6 +146,9 @@ export const LineChartWithMetrics = ({
     const [internalSelectedModelTypes, setInternalSelectedModelTypes] = useState([]);
     const selectedModelTypes = externalSelectedModelTypes !== undefined ? externalSelectedModelTypes : internalSelectedModelTypes;
     const setSelectedModelTypes = externalOnModelTypesChange !== undefined ? externalOnModelTypesChange : setInternalSelectedModelTypes;
+    const [internalSelectedPredictorType, setInternalSelectedPredictorType] = useState('CHF_LCU');
+    const selectedPredictorType = externalSelectedPredictorType !== undefined ? externalSelectedPredictorType : internalSelectedPredictorType;
+    const setSelectedPredictorType = externalOnPredictorChange !== undefined ? externalOnPredictorChange : setInternalSelectedPredictorType;
     const [internalPaneWidth, setInternalPaneWidth] = useState(200);
     const paneWidth = externalPaneWidth !== undefined ? externalPaneWidth : internalPaneWidth;
     const setPaneWidth = externalOnPaneWidthChange !== undefined ? externalOnPaneWidthChange : setInternalPaneWidth;
@@ -149,6 +158,8 @@ export const LineChartWithMetrics = ({
     const [isResizing, setIsResizing] = useState(false);
     const [showCategoryDropdown, setShowCategoryDropdown] = useState(false);
     const [showModelDropdown, setShowModelDropdown] = useState(false);
+    const [hoveredIndex, setHoveredIndex] = useState(null);
+    const [hoveredPoint, setHoveredPoint] = useState(null);
     
     // Constants
     const MIN_PANE_WIDTH = 150;
@@ -276,29 +287,76 @@ export const LineChartWithMetrics = ({
         return selectedCategories.join(", ");
     }, [selectedCategories, allCategories]);
 
-    // Model type options and their corresponding best_model values
-    const MODEL_TYPES = useMemo(() => ({
-        'Constant': ['constant'],
-        'Linear': ['linear'],
-        'Saturating': ['michaelis_menten', 'exp_saturating', 'logarithmic'],
-        'Undefined': ['other']
-    }), []);
+    // All model type display categories with direction (using arrows)
+    const ALL_MODEL_TYPES = useMemo(() => [
+        'Constant', 'Undefined',
+        '↑ Linear', '↓ Linear',
+        '↑ Saturating', '↓ Saturating'
+    ], []);
 
-    const allModelTypes = useMemo(() => Object.keys(MODEL_TYPES), [MODEL_TYPES]);
+    // Get display category from regression result based on model type and direction
+    const getModelDisplayCategory = useCallback((regResult) => {
+        if (!regResult) return 'Undefined';
+        
+        const model = regResult.best_model;
+        if (model === 'constant') return 'Constant';
+        if (model === 'other') return 'Undefined';
+        
+        if (model === 'linear') {
+            return regResult.lin_slope >= 0 ? '↑ Linear' : '↓ Linear';
+        }
+        
+        if (model === 'michaelis_menten') {
+            return regResult.mm_vmax >= 0 ? '↑ Saturating' : '↓ Saturating';
+        }
+        
+        if (model === 'exp_saturating') {
+            return regResult.sat_c >= 0 ? '↑ Saturating' : '↓ Saturating';
+        }
+        
+        if (model === 'logarithmic') {
+            return regResult.log_b >= 0 ? '↑ Saturating' : '↓ Saturating';
+        }
+        
+        return 'Undefined';
+    }, []);
 
-    // Get count of metrics for each model type display name
-    const modelTypeCounts = useMemo(() => {
-        const modelValueCounts = {};
+    const allModelTypes = ALL_MODEL_TYPES;
+
+    // Get display category for each metric (for current predictor only)
+    const metricToDisplayCategory = useMemo(() => {
+        const map = {};
+        // First pass: get categories for current predictor
         regressionResults.forEach(r => {
-            const model = r.best_model;
-            modelValueCounts[model] = (modelValueCounts[model] || 0) + 1;
+            if (r.predictor_type !== selectedPredictorType) return;
+            map[r.target_metric] = getModelDisplayCategory(r);
         });
+        // Second pass: mark metrics with no results for current predictor as 'Undefined'
+        seriesKeys.forEach(key => {
+            if (!(key in map)) {
+                map[key] = 'Undefined';
+            }
+        });
+        return map;
+    }, [regressionResults, getModelDisplayCategory, selectedPredictorType, seriesKeys]);
+
+    // Get count of metrics for each model type display category
+    const modelTypeCounts = useMemo(() => {
         const counts = {};
-        Object.entries(MODEL_TYPES).forEach(([displayName, modelValues]) => {
-            counts[displayName] = modelValues.reduce((sum, val) => sum + (modelValueCounts[val] || 0), 0);
+        ALL_MODEL_TYPES.forEach(cat => counts[cat] = 0);
+        regressionResults.forEach(r => {
+            if (r.predictor_type !== selectedPredictorType) return;
+            const category = getModelDisplayCategory(r);
+            counts[category] = (counts[category] || 0) + 1;
         });
+        // Count metrics with no results as 'Undefined'
+        const metricsWithResults = new Set(regressionResults
+            .filter(r => r.predictor_type === selectedPredictorType)
+            .map(r => r.target_metric));
+        const undefinedCount = seriesKeys.filter(k => !metricsWithResults.has(k)).length;
+        counts['Undefined'] = (counts['Undefined'] || 0) + undefinedCount;
         return counts;
-    }, [regressionResults, MODEL_TYPES]);
+    }, [regressionResults, getModelDisplayCategory, ALL_MODEL_TYPES, selectedPredictorType, seriesKeys]);
 
     // Text for model filter button
     const modelButtonText = useMemo(() => {
@@ -307,11 +365,11 @@ export const LineChartWithMetrics = ({
         return selectedModelTypes.map(mt => `${mt} (${modelTypeCounts[mt] || 0})`).join(", ");
     }, [selectedModelTypes, allModelTypes, modelTypeCounts]);
 
-    // Get regression result for selected metric
+    // Get regression result for selected metric and predictor type
     const regressionForMetric = useMemo(() => {
         if (!selectedMetric || !regressionResults) return null;
-        return regressionResults.find(r => r.metric_name === selectedMetric);
-    }, [selectedMetric, regressionResults]);
+        return regressionResults.find(r => r.target_metric === selectedMetric && r.predictor_type === selectedPredictorType);
+    }, [selectedMetric, regressionResults, selectedPredictorType]);
 
     // Get year range from data
     const yearRange = useMemo(() => {
@@ -320,6 +378,17 @@ export const LineChartWithMetrics = ({
         if (allYears.length === 0) return [1960, 2024];
         const [minYear, maxYear] = d3.extent(allYears);
         return [minYear || 1960, maxYear || 2024];
+    }, [data]);
+
+    // Get year range for a specific metric
+    const getYearRangeForMetric = useCallback((metric) => {
+        if (!metric || data.length === 0) return null;
+        const years = data
+            .map(d => d[metric] !== null && d[metric] !== undefined ? d.year : null)
+            .filter(y => y !== null && y !== undefined);
+        if (years.length === 0) return null;
+        const [minYear, maxYear] = d3.extent(years);
+        return minYear && maxYear ? `${minYear}-${maxYear}` : null;
     }, [data]);
 
     // Initialize yearDomain
@@ -394,6 +463,19 @@ export const LineChartWithMetrics = ({
             .range([boundsHeight, 0]);
     }, [yDomain, boundsHeight]);
 
+    // Create Voronoi diagram from line data points (in pixel coordinates within bounds)
+    const voronoiDiagram = useMemo(() => {
+        if (!xScale || !yScale || lineData.length === 0) return null;
+        
+        // Extract pixel coordinates for each point
+        const points = lineData.map(d => [
+            xScale(d.year),
+            yScale(d.value)
+        ]);
+        
+        return Delaunay.from(points);
+    }, [lineData, xScale, yScale]);
+
     // Line generator
     const lineBuilder = useMemo(() => {
         return d3
@@ -419,25 +501,13 @@ export const LineChartWithMetrics = ({
         setSelectedMetric(null);
     }, []);
 
-    // Get best model for each metric
-    const metricToModel = useMemo(() => {
-        const map = {};
-        regressionResults.forEach(r => {
-            map[r.metric_name] = r.best_model;
-        });
-        return map;
-    }, [regressionResults]);
-
-    // Check if a metric's model matches selected model types
+    // Check if a metric's display category matches selected model types
     const matchesModelFilter = useCallback((metricName) => {
-        const model = metricToModel[metricName];
-        if (!model) return false;
-        // Check if this metric's model is in any of the selected model type groups
-        return selectedModelTypes.some(modelType => {
-            const models = MODEL_TYPES[modelType];
-            return models && models.includes(model);
-        });
-    }, [selectedModelTypes, metricToModel, MODEL_TYPES]);
+        if (selectedModelTypes.length === 0) return true;
+        const displayCategory = metricToDisplayCategory[metricName];
+        if (!displayCategory) return false;
+        return selectedModelTypes.includes(displayCategory);
+    }, [selectedModelTypes, metricToDisplayCategory]);
 
     // Filter and sort metric list
     const filteredSeriesKeys = useMemo(() => {
@@ -451,8 +521,8 @@ export const LineChartWithMetrics = ({
         
         if (sortBy === 'n_observations') {
             result.sort((a, b) => {
-                const obsA = regressionResults.find(r => r.metric_name === a)?.n_observations || 0;
-                const obsB = regressionResults.find(r => r.metric_name === b)?.n_observations || 0;
+                const obsA = regressionResults.find(r => r.target_metric === a && r.predictor_type === selectedPredictorType)?.n_observations || 0;
+                const obsB = regressionResults.find(r => r.target_metric === b && r.predictor_type === selectedPredictorType)?.n_observations || 0;
                 return obsB - obsA;
             });
         } else {
@@ -483,10 +553,51 @@ export const LineChartWithMetrics = ({
         <div ref={containerRef} className="flex flex-col md:flex-row gap-4 relative" style={{ width, height, fontFamily: FONT_FAMILY }}>
             {/* Main Chart Area */}
             <div className="flex-1 min-w-0" style={{ height: isMobileLayout ? chartHeight + 250 : chartHeight + 60 }}>
-                <svg 
-                    width={chartWidth} 
-                    height={chartHeight}
-                >
+                <div className="relative" style={{ width: chartWidth, height: chartHeight }}>
+                    <svg 
+                        width={chartWidth} 
+                        height={chartHeight}
+                        onMouseMove={(e) => {
+                            if (!voronoiDiagram || lineData.length === 0) {
+                                setHoveredIndex(null);
+                                setHoveredPoint(null);
+                                return;
+                            }
+                            
+                            const svgRect = e.currentTarget.getBoundingClientRect();
+                            // Get mouse position relative to the g element (which is at MARGIN.left, MARGIN.top within SVG)
+                            const mouseX = e.clientX - svgRect.left - MARGIN.left;
+                            const mouseY = e.clientY - svgRect.top - MARGIN.top;
+                            
+                            // Clamp to bounds to avoid errors
+                            if (mouseX < 0 || mouseX > boundsWidth || mouseY < 0 || mouseY > boundsHeight) {
+                                setHoveredIndex(null);
+                                setHoveredPoint(null);
+                                return;
+                            }
+                            
+                            // Find closest point using Voronoi
+                            const closestIndex = voronoiDiagram.find(mouseX, mouseY);
+                            
+                            if (closestIndex !== null && closestIndex >= 0 && closestIndex < lineData.length) {
+                                const point = lineData[closestIndex];
+                                setHoveredIndex(closestIndex);
+                                setHoveredPoint({
+                                    xPos: MARGIN.left + xScale(point.year) - 120,
+                                    yPos: MARGIN.top + yScale(point.value) - 20,
+                                    year: point.year,
+                                    metricValue: `Metric value: ${formatValue(point.value)}`
+                                });
+                            } else {
+                                setHoveredIndex(null);
+                                setHoveredPoint(null);
+                            }
+                        }}
+                        onMouseLeave={() => {
+                            setHoveredIndex(null);
+                            setHoveredPoint(null);
+                        }}
+                    >
                     {/* Title */}
                     {title && (
                         <text
@@ -501,9 +612,11 @@ export const LineChartWithMetrics = ({
                             {selectedMetric ? (
                                 () => {
                                     const name = formatMetricName(selectedMetric);
+                                    const yearRange = getYearRangeForMetric(selectedMetric);
+                                    const displayName = yearRange ? `${name} - ${yearRange}` : name;
                                     // Only split if name is long (>40 chars)
-                                    if (name.length > 80) {
-                                        const words = name.split(' ');
+                                    if (displayName.length > 80) {
+                                        const words = displayName.split(' ');
                                         const mid = Math.ceil(words.length / 2);
                                         return (
                                             <>
@@ -512,7 +625,7 @@ export const LineChartWithMetrics = ({
                                             </>
                                         );
                                     }
-                                    return name;
+                                    return displayName;
                                 }
                             )() : title}
                             {regressionForMetric && selectedMetric && (
@@ -560,19 +673,35 @@ export const LineChartWithMetrics = ({
                             />
                         )}
                         
-                        {/* Data points on line */}
-                        {lineData.map((point, i) => (
-                            <circle
-                                key={i}
-                                cx={xScale(point.year)}
-                                cy={yScale(point.value)}
-                                r={6}
-                                fill={"black"}
-                                fillOpacity={0.7}
-                                stroke="white"
-                                strokeWidth={1.5}
+                        {/* Vertical hover line */}
+                        {hoveredIndex !== null && lineData[hoveredIndex] && (
+                            <line
+                                x1={xScale(lineData[hoveredIndex].year)}
+                                y1={0}
+                                x2={xScale(lineData[hoveredIndex].year)}
+                                y2={boundsHeight}
+                                stroke="#999"
+                                strokeWidth={1}
+                                strokeDasharray="3,3"
                             />
-                        ))}
+                        )}
+                        
+                        {/* Data points on line */}
+                        {lineData.map((point, i) => {
+                            const isHovered = hoveredIndex === i;
+                            return (
+                                <circle
+                                    key={i}
+                                    cx={xScale(point.year)}
+                                    cy={yScale(point.value)}
+                                    r={6}
+                                    fill={"black"}
+                                    fillOpacity={isHovered ? 1 : 0.7}
+                                    stroke="white"
+                                    strokeWidth={1.5}
+                                />
+                            );
+                        })}
                         
                         {/* Axes */}
                         <AxisBottom 
@@ -595,8 +724,12 @@ export const LineChartWithMetrics = ({
                             tickFormat={formatValue}
                         />
                     </g>
-                </svg>
-                
+                    </svg>
+                    
+                    {/* Tooltip */}
+                    <Tooltip interactionData={hoveredPoint} />
+                </div>
+
                 {/* Slider - Year range */}
                 <div className="mt-4 px-2 flex items-center gap-4">
                     <Slider
@@ -650,6 +783,19 @@ export const LineChartWithMetrics = ({
                         placeholder="Search for a metric"
                         style={{ fontFamily: FONT_FAMILY, fontSize: itemFontSize }}
                     />
+                </div>
+                
+                {/* Predictor type selector */}
+                <div className="mb-4">
+                    <select
+                        value={selectedPredictorType}
+                        onChange={(e) => setSelectedPredictorType(e.target.value)}
+                        className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        style={{ fontFamily: FONT_FAMILY, fontSize: itemFontSize }}
+                    >
+                        <option value="CHF_LCU">GDP : CHF (constant)</option>
+                        <option value="current_USD">GDP : USD (current)</option>
+                    </select>
                 </div>
                 
                 {/* Model type filter dropdown */}
@@ -793,7 +939,7 @@ export const LineChartWithMetrics = ({
                 <div className="space-y-1">
                     {filteredSeriesKeys.map((key) => {
                         const isSelected = selectedMetric === key;
-                        const regResult = regressionResults.find(r => r.metric_name === key);
+                        const regResult = regressionResults.find(r => r.target_metric === key && r.predictor_type === selectedPredictorType);
                         
                         // Get database name for color (WISE, SPI2025, etc.)
                         const metricMetadata = metadata.find(m => m.full_name === key);

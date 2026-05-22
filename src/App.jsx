@@ -20,6 +20,7 @@ export default function App() {
     const [sortBy, setSortBy] = useState('alphabetical');
     const [selectedCategories, setSelectedCategories] = useState([]);
     const [selectedModelTypes, setSelectedModelTypes] = useState([]);
+    const [selectedPredictorType, setSelectedPredictorType] = useState('CHF_LCU');
     const [paneWidth, setPaneWidth] = useState(200);
     const [metadata, setMetadata] = useState([]);
     
@@ -49,7 +50,7 @@ export default function App() {
                 // Initialize filters
                 const allCategories = [...new Set(meta.map(m => m.category).filter(c => c))];
                 setSelectedCategories(allCategories);
-                setSelectedModelTypes(['Constant', 'Linear', 'Saturating', 'Undefined']);
+                setSelectedModelTypes(['Constant', 'Undefined', '↑ Linear', '↓ Linear', '↑ Saturating', '↓ Saturating']);
                 
                 setError(null);
             } catch (err) {
@@ -164,6 +165,8 @@ export default function App() {
                             onCategoriesChange={setSelectedCategories}
                             selectedModelTypes={selectedModelTypes}
                             onModelTypesChange={setSelectedModelTypes}
+                            selectedPredictorType={selectedPredictorType}
+                            onPredictorChange={setSelectedPredictorType}
                             paneWidth={paneWidth}
                             onPaneWidthChange={setPaneWidth}
                             xAxisLabel="GDP per capita ($USD)"
@@ -187,6 +190,8 @@ export default function App() {
                             onCategoriesChange={setSelectedCategories}
                             selectedModelTypes={selectedModelTypes}
                             onModelTypesChange={setSelectedModelTypes}
+                            selectedPredictorType={selectedPredictorType}
+                            onPredictorChange={setSelectedPredictorType}
                             paneWidth={paneWidth}
                             onPaneWidthChange={setPaneWidth}
                             xAxisLabel="Year"
@@ -199,11 +204,24 @@ export default function App() {
 
                 {/* Info Panel */}
                 <div className="mt-20 bg-blue-50 border border-blue-200 rounded-lg p-4">
-                    <h3 className="font-semibold text-blue-800 mb-2">Remarques</h3>
+                    <h3 className="font-semibold text-blue-800 mb-2">User tips</h3>
                     <p className="text-sm text-blue-700">
-                        <ul>
-                            <li>- a</li>
-                            <li>- b</li>
+                        <ul className="list-disc list-inside">
+                            <li> Right pane
+                                <ul className="list-disc list-inside pl-6">
+                                    <li>2 GDP predictor metrics can be selected in the right pane : GDP in current USD and GDP in constant CHF (LCU)</li>
+                                    <li>Can filter by model type, and also by increasing or decreasing regression </li>
+                                    <li>Can filter categories. For now those categories come from the databases metadata </li>
+                                    <li>Can sort the metric list order by alphabetical order or by the number of datapoints </li>
+                                </ul>
+                            </li>
+                            <li> For the scatter plot
+                                <ul className="list-disc list-inside pl-6">
+                                    <li>Hovering shows connected lines between data points, going from the earliest year to the latest year, in order</li>
+                                    <li>Hovering also shows a tooltip of the metric (y axis) value, and the GDP (x axis) value</li>
+                                </ul>
+                            </li>
+                            
                         </ul>
                     </p>
                 </div>

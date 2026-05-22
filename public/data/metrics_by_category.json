@@ -282,25 +282,10 @@
       "acronym": "POP_Resident Permanent Population",
       "full_name": "POP_Resident Permanent Population",
       "unit": "individual",
-      "description": "Total resident permanent population of Switzerland"
+      "description": "Total resident permanent population of Switzerland from UN WPP"
     }
   ],
-  "Economy": [
-    {
-      "metric_id": 357,
-      "acronym": "GDP_current_US",
-      "full_name": "GDP_GDP (current US$)",
-      "unit": "US dollars",
-      "description": "GDP at current prices in US dollars"
-    },
-    {
-      "metric_id": 356,
-      "acronym": "GDP_per_capita_constant_2021_international_dollars",
-      "full_name": "GDP_GDP per capita (constant 2021 international dollars)",
-      "unit": "international dollars",
-      "description": "GDP per capita measured in constant 2021 international dollars"
-    }
-  ],
+  "Economy": [],
   "Education": [
     {
       "metric_id": 205,
@@ -2259,42 +2244,42 @@
   ],
   "Wellbeing": [
     {
-      "metric_id": 359,
+      "metric_id": 358,
       "acronym": "OFS_D\u00e9penses_de_sant\u00e9_par_habitant",
       "full_name": "OFS_D\u00e9penses de sant\u00e9 par habitant",
       "unit": "CHF/month",
       "description": "OFS: D\u00e9penses de sant\u00e9 par habitant"
     },
     {
-      "metric_id": 364,
+      "metric_id": 363,
       "acronym": "OFS_Esp\u00e9rance_de_vie_\u00e0_la_naissance___Femmes",
       "full_name": "OFS_Esp\u00e9rance de vie \u00e0 la naissance - Femmes",
       "unit": "Ann\u00e9es",
       "description": "OFS: Esp\u00e9rance de vie \u00e0 la naissance - Femmes"
     },
     {
-      "metric_id": 363,
+      "metric_id": 362,
       "acronym": "OFS_Esp\u00e9rance_de_vie_\u00e0_la_naissance___Hommes",
       "full_name": "OFS_Esp\u00e9rance de vie \u00e0 la naissance - Hommes",
       "unit": "Ann\u00e9es",
       "description": "OFS: Esp\u00e9rance de vie \u00e0 la naissance - Hommes"
     },
     {
-      "metric_id": 360,
+      "metric_id": 359,
       "acronym": "OFS_Heures_effectives_de_travail_par_rapport_\u00e0_1990",
       "full_name": "OFS_Heures effectives de travail par rapport \u00e0 1990",
       "unit": "Indice par rapport \u00e0 1990",
       "description": "OFS: Heures effectives de travail par rapport \u00e0 1990"
     },
     {
-      "metric_id": 361,
+      "metric_id": 360,
       "acronym": "OFS_Taux_dactivit\u00e9_des_15_64_ans",
       "full_name": "OFS_Taux d'activit\u00e9 des 15-64 ans",
       "unit": "Moyennes trimestrielles, en %",
       "description": "OFS: Taux d'activit\u00e9 des 15-64 ans"
     },
     {
-      "metric_id": 362,
+      "metric_id": 361,
       "acronym": "OFS_Taux_de_ch\u00f4mage_des_15_64_au_sens_du_BIT",
       "full_name": "OFS_Taux de ch\u00f4mage des 15-64 au sens du BIT",
       "unit": "Moyennes trimestrielles, en %",

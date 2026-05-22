@@ -9,6 +9,7 @@ import { AxisLeft } from '../Axes/AxisLeft';
 import { AxisBottom } from '../Axes/AxisBottom';
 import { Slider } from '../ui/Slider';
 import { SearchBar } from '../ui/SearchBar';
+import { Tooltip } from '../ui/Tooltip';
 import { useDimensions } from '../../../hooks/use-dimensions';
 
 const FONT_FAMILY = '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
@@ -31,6 +32,18 @@ function getCategoryFromName(metricName) {
     if (metricName.startsWith('POP_')) return 'Population';
     if (metricName.startsWith('OFS_')) return 'OFS';
     return 'Other';
+}
+
+/**
+ * Check if two rectangles intersect
+ */
+function rectsIntersect(a, b) {
+    return !(
+        a.x + a.width < b.x ||
+        a.x > b.x + b.width ||
+        a.y + a.height < b.y ||
+        a.y > b.y + b.height
+    );
 }
 
 /**
@@ -146,6 +159,8 @@ function generateRegressionPoints(modelType, params, xRange, numPoints = 100) {
  * @param {Function} [props.onCategoriesChange] - Callback when categories change
  * @param {Array} [props.selectedModelTypes] - Currently selected model types (controlled)
  * @param {Function} [props.onModelTypesChange] - Callback when model types change
+ * @param {string} [props.selectedPredictorType='CHF_LCU'] - Currently selected predictor type
+ * @param {Function} [props.onPredictorChange] - Callback when predictor type changes
  * @param {number} [props.paneWidth] - Current pane width (controlled)
  * @param {Function} [props.onPaneWidthChange] - Callback when pane width changes
  * @param {string} [props.xAxisLabel='GDP per capita ($USD)'] - Label for x-axis
@@ -167,6 +182,8 @@ export const ScatterplotWithRegression = ({
     onCategoriesChange: externalOnCategoriesChange,
     selectedModelTypes: externalSelectedModelTypes,
     onModelTypesChange: externalOnModelTypesChange,
+    selectedPredictorType: externalSelectedPredictorType,
+    onPredictorChange: externalOnPredictorChange,
     paneWidth: externalPaneWidth,
     onPaneWidthChange: externalOnPaneWidthChange,
     xAxisLabel = 'GDP per capita ($USD)',
@@ -192,6 +209,9 @@ export const ScatterplotWithRegression = ({
     const [internalSelectedModelTypes, setInternalSelectedModelTypes] = useState([]);
     const selectedModelTypes = externalSelectedModelTypes !== undefined ? externalSelectedModelTypes : internalSelectedModelTypes;
     const setSelectedModelTypes = externalOnModelTypesChange !== undefined ? externalOnModelTypesChange : setInternalSelectedModelTypes;
+    const [internalSelectedPredictorType, setInternalSelectedPredictorType] = useState('CHF_LCU');
+    const selectedPredictorType = externalSelectedPredictorType !== undefined ? externalSelectedPredictorType : internalSelectedPredictorType;
+    const setSelectedPredictorType = externalOnPredictorChange !== undefined ? externalOnPredictorChange : setInternalSelectedPredictorType;
     const [internalPaneWidth, setInternalPaneWidth] = useState(200);
     const paneWidth = externalPaneWidth !== undefined ? externalPaneWidth : internalPaneWidth;
     const setPaneWidth = externalOnPaneWidthChange !== undefined ? externalOnPaneWidthChange : setInternalPaneWidth;
@@ -201,6 +221,8 @@ export const ScatterplotWithRegression = ({
     const [isResizing, setIsResizing] = useState(false);
     const [showCategoryDropdown, setShowCategoryDropdown] = useState(false);
     const [showModelDropdown, setShowModelDropdown] = useState(false);
+    const [hoveredIndex, setHoveredIndex] = useState(null);
+    const [hoveredPoint, setHoveredPoint] = useState(null);
     
     // Constants
     const MIN_PANE_WIDTH = 150;
@@ -326,29 +348,76 @@ export const ScatterplotWithRegression = ({
         return selectedCategories.join(", ");
     }, [selectedCategories, allCategories]);
     
-    // Model type options and their corresponding best_model values
-    const MODEL_TYPES = useMemo(() => ({
-        'Constant': ['constant'],
-        'Linear': ['linear'],
-        'Saturating': ['michaelis_menten', 'exp_saturating', 'logarithmic'],
-        'Undefined': ['other']
-    }), []);
-    
-    const allModelTypes = useMemo(() => Object.keys(MODEL_TYPES), []);
+    // All model type display categories with direction (using arrows)
+    const ALL_MODEL_TYPES = useMemo(() => [
+        'Constant', 'Undefined',
+        '↑ Linear', '↓ Linear',
+        '↑ Saturating', '↓ Saturating'
+    ], []);
 
-    // Get count of metrics for each model type display name
-    const modelTypeCounts = useMemo(() => {
-        const modelValueCounts = {};
+    // Get display category from regression result based on model type and direction
+    const getModelDisplayCategory = useCallback((regResult) => {
+        if (!regResult) return 'Undefined';
+        
+        const model = regResult.best_model;
+        if (model === 'constant') return 'Constant';
+        if (model === 'other') return 'Undefined';
+        
+        if (model === 'linear') {
+            return regResult.lin_slope >= 0 ? '↑ Linear' : '↓ Linear';
+        }
+        
+        if (model === 'michaelis_menten') {
+            return regResult.mm_vmax >= 0 ? '↑ Saturating' : '↓ Saturating';
+        }
+        
+        if (model === 'exp_saturating') {
+            return regResult.sat_c >= 0 ? '↑ Saturating' : '↓ Saturating';
+        }
+        
+        if (model === 'logarithmic') {
+            return regResult.log_b >= 0 ? '↑ Saturating' : '↓ Saturating';
+        }
+        
+        return 'Undefined';
+    }, []);
+
+    const allModelTypes = ALL_MODEL_TYPES;
+
+    // Get display category for each metric (for current predictor only)
+    const metricToDisplayCategory = useMemo(() => {
+        const map = {};
+        // First pass: get categories for current predictor
         regressionResults.forEach(r => {
-            const model = r.best_model;
-            modelValueCounts[model] = (modelValueCounts[model] || 0) + 1;
+            if (r.predictor_type !== selectedPredictorType) return;
+            map[r.target_metric] = getModelDisplayCategory(r);
         });
+        // Second pass: mark metrics with no results for current predictor as 'Undefined'
+        seriesKeys.forEach(key => {
+            if (!(key in map)) {
+                map[key] = 'Undefined';
+            }
+        });
+        return map;
+    }, [regressionResults, getModelDisplayCategory, selectedPredictorType, seriesKeys]);
+
+    // Get count of metrics for each model type display category
+    const modelTypeCounts = useMemo(() => {
         const counts = {};
-        Object.entries(MODEL_TYPES).forEach(([displayName, modelValues]) => {
-            counts[displayName] = modelValues.reduce((sum, val) => sum + (modelValueCounts[val] || 0), 0);
+        ALL_MODEL_TYPES.forEach(cat => counts[cat] = 0);
+        regressionResults.forEach(r => {
+            if (r.predictor_type !== selectedPredictorType) return;
+            const category = getModelDisplayCategory(r);
+            counts[category] = (counts[category] || 0) + 1;
         });
+        // Count metrics with no results as 'Undefined'
+        const metricsWithResults = new Set(regressionResults
+            .filter(r => r.predictor_type === selectedPredictorType)
+            .map(r => r.target_metric));
+        const undefinedCount = seriesKeys.filter(k => !metricsWithResults.has(k)).length;
+        counts['Undefined'] = (counts['Undefined'] || 0) + undefinedCount;
         return counts;
-    }, [regressionResults, MODEL_TYPES]);
+    }, [regressionResults, getModelDisplayCategory, ALL_MODEL_TYPES, selectedPredictorType, seriesKeys]);
 
     // Text for model filter button
     const modelButtonText = useMemo(() => {
@@ -357,20 +426,37 @@ export const ScatterplotWithRegression = ({
         return selectedModelTypes.map(mt => `${mt} (${modelTypeCounts[mt] || 0})`).join(", ");
     }, [selectedModelTypes, allModelTypes, modelTypeCounts]);
     
-    // Get regression result for selected metric
+    // Get regression result for selected metric and predictor type
     const regressionForMetric = useMemo(() => {
         if (!selectedMetric || !regressionResults) return null;
-        return regressionResults.find(r => r.metric_name === selectedMetric);
-    }, [selectedMetric, regressionResults]);
+        return regressionResults.find(r => r.target_metric === selectedMetric && r.predictor_type === selectedPredictorType);
+    }, [selectedMetric, regressionResults, selectedPredictorType]);
     
-    // Get GDP range from data
+    // Get GDP range from data based on selected predictor
     const gdpRange = useMemo(() => {
         if (data.length === 0) return [0, 100];
-        const allX = data.map(d => d.x).filter(x => x !== null && x !== undefined);
+        const gdpKey = selectedPredictorType === 'CHF_LCU' ? 'gdp_lcu' : 'gdp_usd';
+        const allX = data.map(d => d[gdpKey]).filter(x => x !== null && x !== undefined);
         if (allX.length === 0) return [0, 100];
         const [minX, maxX] = d3.extent(allX);
         return [minX || 0, maxX || 100];
+    }, [data, selectedPredictorType]);
+
+    // Get year range for a specific metric
+    const getYearRangeForMetric = useCallback((metric) => {
+        if (!metric || data.length === 0) return null;
+        const years = data
+            .map(d => d[metric] !== null && d[metric] !== undefined ? d.year : null)
+            .filter(y => y !== null && y !== undefined);
+        if (years.length === 0) return null;
+        const [minYear, maxYear] = d3.extent(years);
+        return minYear && maxYear ? `${minYear}-${maxYear}` : null;
     }, [data]);
+
+    // Dynamic x-axis label based on selected predictor
+    const effectiveXAxisLabel = selectedPredictorType === 'CHF_LCU' 
+        ? 'GDP per capita (CHF, constant LCU)' 
+        : 'GDP per capita (current $USD)';
     
     // Initialize xDomain
     useEffect(() => {
@@ -385,44 +471,39 @@ export const ScatterplotWithRegression = ({
             setXDomain(gdpRange);
         } else if (regressionForMetric && regressionForMetric.n_observations > 0) {
             // Use the data's GDP range for this metric
+            const gdpKey = selectedPredictorType === 'CHF_LCU' ? 'gdp_lcu' : 'gdp_usd';
             const metricX = data
-                .filter(d => d[selectedMetric] !== null && d[selectedMetric] !== undefined && d.x !== null && d.x !== undefined)
-                .map(d => d.x);
+                .filter(d => d[selectedMetric] !== null && d[selectedMetric] !== undefined && d[gdpKey] !== null && d[gdpKey] !== undefined)
+                .map(d => d[gdpKey]);
             if (metricX.length > 0) {
                 const [minX, maxX] = d3.extent(metricX);
                 setXDomain([minX || gdpRange[0], maxX || gdpRange[1]]);
             }
         }
-    }, [selectedMetric, data, gdpRange, regressionForMetric]);
+    }, [selectedMetric, data, gdpRange, regressionForMetric, selectedPredictorType]);
     
     // Effective xDomain (controlled by slider)
     const effectiveXDomain = xDomain || gdpRange;
     
     // Filter data based on x-domain
     const filteredData = useMemo(() => {
-        return data.filter(d => d.x >= effectiveXDomain[0] && d.x <= effectiveXDomain[1]);
-    }, [data, effectiveXDomain]);
+        const gdpKey = selectedPredictorType === 'CHF_LCU' ? 'gdp_lcu' : 'gdp_usd';
+        return data.filter(d => {
+            const xVal = d[gdpKey];
+            return xVal >= effectiveXDomain[0] && xVal <= effectiveXDomain[1];
+        });
+    }, [data, effectiveXDomain, selectedPredictorType]);
     
     // Get scatter points for selected metric
     const scatterData = useMemo(() => {
         if (!selectedMetric) return [];
+        const gdpKey = selectedPredictorType === 'CHF_LCU' ? 'gdp_lcu' : 'gdp_usd';
         return filteredData.map(d => ({
-            x: d.x,
+            x: d[gdpKey],
             y: d[selectedMetric],
             year: d.year
         })).filter(d => d.y !== null && d.y !== undefined && d.x !== null && d.x !== undefined);
-    }, [selectedMetric, filteredData]);
-    
-    // Calculate y-domain
-    const yDomain = useMemo(() => {
-        if (scatterData.length === 0) return [0, 1];
-        const [minY, maxY] = d3.extent(scatterData, d => d.y);
-        const padding = (maxY - minY) * 0.1;
-        return [
-            minY !== undefined ? minY - padding : 0,
-            maxY !== undefined ? maxY + padding : 1
-        ];
-    }, [scatterData]);
+    }, [selectedMetric, filteredData, selectedPredictorType]);
     
     // Generate regression curve points
     const regressionPoints = useMemo(() => {
@@ -434,6 +515,31 @@ export const ScatterplotWithRegression = ({
             100
         );
     }, [selectedMetric, regressionForMetric, effectiveXDomain]);
+
+    // Calculate y-domain (includes both data points and regression line)
+    const yDomain = useMemo(() => {
+        if (scatterData.length === 0) return [0, 1];
+        const dataYValues = scatterData.map(d => d.y);
+        const regressionYValues = regressionPoints.map(d => d.y);
+        const allYValues = [...dataYValues, ...regressionYValues]
+            .filter(y => y !== null && y !== undefined && !isNaN(y) && isFinite(y));
+        if (allYValues.length === 0) return [0, 1];
+        const [minY, maxY] = d3.extent(allYValues);
+        const range = maxY - minY;
+        
+        // Ensure minimum range to prevent degenerate scales (e.g., constant metrics)
+        const minRange = 2; // Minimum visual range
+        if (Math.abs(range) < minRange) {
+            const center = (minY + maxY) / 2;
+            return [center - minRange/2, center + minRange/2];
+        }
+        
+        const padding = range * 0.1;
+        return [
+            minY !== undefined ? minY - padding : 0,
+            maxY !== undefined ? maxY + padding : 1
+        ];
+    }, [scatterData, regressionPoints]);
     
     // X and Y scales
     const xScale = useMemo(() => {
@@ -466,25 +572,13 @@ export const ScatterplotWithRegression = ({
         setSelectedMetric(null);
     }, []);
     
-    // Get best model for each metric
-    const metricToModel = useMemo(() => {
-        const map = {};
-        regressionResults.forEach(r => {
-            map[r.metric_name] = r.best_model;
-        });
-        return map;
-    }, [regressionResults]);
-    
-    // Check if a metric's model matches selected model types
+    // Check if a metric's display category matches selected model types
     const matchesModelFilter = useCallback((metricName) => {
-        const model = metricToModel[metricName];
-        if (!model) return false;
-        // Check if this metric's model is in any of the selected model type groups
-        return selectedModelTypes.some(modelType => {
-            const models = MODEL_TYPES[modelType];
-            return models && models.includes(model);
-        });
-    }, [selectedModelTypes, metricToModel, MODEL_TYPES]);
+        if (selectedModelTypes.length === 0) return true;
+        const displayCategory = metricToDisplayCategory[metricName];
+        if (!displayCategory) return false;
+        return selectedModelTypes.includes(displayCategory);
+    }, [selectedModelTypes, metricToDisplayCategory]);
     
     // Filter and sort metric list
     const filteredSeriesKeys = useMemo(() => {
@@ -498,8 +592,8 @@ export const ScatterplotWithRegression = ({
         
         if (sortBy === 'n_observations') {
             result.sort((a, b) => {
-                const obsA = regressionResults.find(r => r.metric_name === a)?.n_observations || 0;
-                const obsB = regressionResults.find(r => r.metric_name === b)?.n_observations || 0;
+                const obsA = regressionResults.find(r => r.target_metric === a && r.predictor_type === selectedPredictorType)?.n_observations || 0;
+                const obsB = regressionResults.find(r => r.target_metric === b && r.predictor_type === selectedPredictorType)?.n_observations || 0;
                 return obsB - obsA;
             });
         } else {
@@ -534,7 +628,7 @@ export const ScatterplotWithRegression = ({
     return (
         <div ref={containerRef} className="flex flex-col md:flex-row gap-4 relative" style={{ width, height, fontFamily: FONT_FAMILY }}>
             {/* Main Chart Area */}
-            <div className="flex-1 min-w-0" style={{ height: isMobileLayout ? chartHeight + 250 : chartHeight + 60 }}>
+            <div className="flex-1 min-w-0 relative" style={{ height: isMobileLayout ? chartHeight + 250 : chartHeight + 60 }}>
                 <svg 
                     width={chartWidth} 
                     height={chartHeight}
@@ -553,9 +647,11 @@ export const ScatterplotWithRegression = ({
                             {selectedMetric ? (
                                 () => {
                                     const name = formatMetricName(selectedMetric);
+                                    const yearRange = getYearRangeForMetric(selectedMetric);
+                                    const displayName = yearRange ? `${name} - ${yearRange}` : name;
                                     // Only split if name is long (>40 chars)
-                                    if (name.length > 80) {
-                                        const words = name.split(' ');
+                                    if (displayName.length > 80) {
+                                        const words = displayName.split(' ');
                                         const mid = Math.ceil(words.length / 2);
                                         return (
                                             <>
@@ -564,7 +660,7 @@ export const ScatterplotWithRegression = ({
                                             </>
                                         );
                                     }
-                                    return name;
+                                    return displayName;
                                 }
                             )() : title}
                             {regressionForMetric && selectedMetric && (
@@ -616,25 +712,262 @@ export const ScatterplotWithRegression = ({
                         )}
                         
                         {/* Scatter points */}
-                        {scatterData.map((point, i) => (
-                            <circle
-                                key={i}
-                                cx={xScale(point.x)}
-                                cy={yScale(point.y)}
-                                r={6}
-                                fill={"black"}
-                                fillOpacity={0.7}
-                                stroke="white"
-                                strokeWidth={1.5}
+                        {scatterData.map((point, i) => {
+                            const isHovered = hoveredIndex === i;
+                            const opacity = hoveredIndex === null ? 0.7 : (isHovered ? 1 : 0.2);
+                            return (
+                                <circle
+                                    key={i}
+                                    cx={xScale(point.x)}
+                                    cy={yScale(point.y)}
+                                    r={6}
+                                    fill={"black"}
+                                    fillOpacity={opacity}
+                                    stroke="white"
+                                    strokeWidth={1.5}
+                                    onMouseEnter={(e) => {
+                                        const gdpLabel = selectedPredictorType === 'CHF_LCU' ? 'GDP (constant CHF)' : 'GDP (current USD)';
+                                        setHoveredIndex(i);
+                                        setHoveredPoint({
+                                            xPos: MARGIN.left + xScale(point.x) - 150,
+                                            yPos: MARGIN.top + yScale(point.y) - 10,
+                                            year: point.year,
+                                            metricValue: `Metric value: ${formatValue(point.y)}`,
+                                            gdpValue: `${gdpLabel}: ${formatGDP(point.x)}`
+                                        });
+                                    }}
+                                    onMouseLeave={() => {
+                                        setHoveredIndex(null);
+                                        setHoveredPoint(null);
+                                    }}
+                                />
+                            );
+                        })}
+
+                        {/* Connection line showing trajectory (all points in temporal order) */}
+                        {hoveredIndex !== null && scatterData.length > 0 && (
+                            <path
+                                d={d3.line()
+                                    .x(d => xScale(d.x))
+                                    .y(d => yScale(d.y))
+                                    ([...scatterData].sort((a, b) => a.year - b.year))}
+                                fill="none"
+                                stroke="#888"
+                                strokeWidth={1}
+                                strokeDasharray="3,3"
+                                opacity={0.7}
                             />
-                        ))}
+                        )}
+
+                        {/* Year labels for first, median, and last points */}
+                        {(() => {
+                            if (scatterData.length === 0) return null;
+                            
+                            // Sort points by year
+                            const sortedByYear = [...scatterData].sort((a, b) => a.year - b.year);
+                            const first = sortedByYear[0];
+                            const last = sortedByYear[sortedByYear.length - 1];
+                            
+                            // Calculate median index (adjusted for odd/even)
+                            const midIndex = sortedByYear.length % 2 === 0 
+                                ? sortedByYear.length / 2 - 1
+                                : Math.floor(sortedByYear.length / 2);
+                            const median = sortedByYear[midIndex];
+                            
+                            const pointsToLabel = [first, median, last];
+                            const labelFontSize = Math.max(8, width * 0.013);
+                            
+                            // Estimate label dimensions (year is 4 digits max)
+                            const labelWidth = 25;
+                            const labelHeight = labelFontSize + 4;
+                            const pointRadius = 6;
+                            const collisionBuffer = 4;
+                            
+                            // Candidate positions: [dx, dy, textAnchor]
+                            const candidatePositions = [
+                                { dx: 0, dy: -8, textAnchor: 'middle' },   // Above
+                                { dx: 0, dy: 14, textAnchor: 'middle' },   // Below
+                                { dx: -20, dy: -8, textAnchor: 'end' },    // Left-above
+                                { dx: 20, dy: -8, textAnchor: 'start' },   // Right-above
+                                { dx: -20, dy: 14, textAnchor: 'end' },    // Left-below
+                                { dx: 20, dy: 14, textAnchor: 'start' },   // Right-below
+                                { dx: 0, dy: -16, textAnchor: 'middle' },  // Well above (2x distance)
+                            ];
+                            
+                            // Already placed label positions
+                            const placedLabels = [];
+                            const finalPositions = []; // {x, y, textAnchor, point}
+                            
+                            // Find position for each label
+                            pointsToLabel.forEach((point) => {
+                                let finalX, finalY, finalTextAnchor;
+                                
+                                // Try candidate positions in order
+                                for (const pos of candidatePositions) {
+                                    let labelX = xScale(point.x) + pos.dx;
+                                    let labelY = yScale(point.y) + pos.dy;
+                                    
+                                    // Ensure label center is closest to its own point
+                                    const labelCenterX = pos.textAnchor === 'end' ? labelX - labelWidth :
+                                        pos.textAnchor === 'start' ? labelX + labelWidth : labelX;
+                                    const labelCenterY = labelY - labelHeight / 2;
+                                    
+                                    const ownPointX = xScale(point.x);
+                                    const ownPointY = yScale(point.y);
+                                    const ownDistSq = (labelCenterX - ownPointX) ** 2 + (labelCenterY - ownPointY) ** 2;
+                                    
+                                    let minOtherDistSq = Infinity;
+                                    for (const otherPoint of scatterData) {
+                                        if (otherPoint === point) continue;
+                                        const otherX = xScale(otherPoint.x);
+                                        const otherY = yScale(otherPoint.y);
+                                        const distSq = (labelCenterX - otherX) ** 2 + (labelCenterY - otherY) ** 2;
+                                        if (distSq < minOtherDistSq) {
+                                            minOtherDistSq = distSq;
+                                        }
+                                    }
+                                    
+                                    if (minOtherDistSq < ownDistSq) {
+                                        continue;
+                                    }
+                                    
+                                    // Clamp and check collisions
+                                    let clampedLabelX = labelX;
+                                    let clampedLabelY = labelY;
+                                    
+                                    let boxX = pos.textAnchor === 'end' ? clampedLabelX - labelWidth :
+                                        pos.textAnchor === 'start' ? clampedLabelX : clampedLabelX - labelWidth/2;
+                                    let boxY = clampedLabelY - labelHeight;
+                                    
+                                    if (boxX < 0) {
+                                        clampedLabelX = pos.textAnchor === 'end' ? labelWidth :
+                                            pos.textAnchor === 'start' ? 0 : labelWidth/2;
+                                        boxX = 0;
+                                    } else if (boxX + labelWidth > boundsWidth) {
+                                        clampedLabelX = pos.textAnchor === 'end' ? boundsWidth :
+                                            pos.textAnchor === 'start' ? boundsWidth - labelWidth : boundsWidth - labelWidth/2;
+                                        boxX = boundsWidth - labelWidth;
+                                    }
+                                    
+                                    if (boxY < 0) {
+                                        clampedLabelY = labelHeight;
+                                        boxY = 0;
+                                    } else if (boxY + labelHeight > boundsHeight) {
+                                        clampedLabelY = boundsHeight;
+                                        boxY = boundsHeight - labelHeight;
+                                    }
+                                    
+                                    labelX = clampedLabelX;
+                                    labelY = clampedLabelY;
+                                    
+                                    const labelBox = { x: boxX, y: boxY, width: labelWidth, height: labelHeight };
+                                    
+                                    const pointBox = {
+                                        x: xScale(point.x) - pointRadius - collisionBuffer,
+                                        y: yScale(point.y) - pointRadius - collisionBuffer,
+                                        width: (pointRadius + collisionBuffer) * 2,
+                                        height: (pointRadius + collisionBuffer) * 2
+                                    };
+                                    
+                                    if (rectsIntersect(labelBox, pointBox)) continue;
+                                    
+                                    let collidesWithPoint = false;
+                                    for (const otherPoint of scatterData) {
+                                        if (otherPoint === point) continue;
+                                        const otherPointBox = {
+                                            x: xScale(otherPoint.x) - pointRadius - collisionBuffer,
+                                            y: yScale(otherPoint.y) - pointRadius - collisionBuffer,
+                                            width: (pointRadius + collisionBuffer) * 2,
+                                            height: (pointRadius + collisionBuffer) * 2
+                                        };
+                                        if (rectsIntersect(labelBox, otherPointBox)) {
+                                            collidesWithPoint = true;
+                                            break;
+                                        }
+                                    }
+                                    if (collidesWithPoint) continue;
+                                    
+                                    let collidesWithLabel = false;
+                                    for (const placed of placedLabels) {
+                                        if (rectsIntersect(labelBox, placed.box)) {
+                                            collidesWithLabel = true;
+                                            break;
+                                        }
+                                    }
+                                    if (collidesWithLabel) continue;
+                                    
+                                    finalX = labelX;
+                                    finalY = labelY;
+                                    finalTextAnchor = pos.textAnchor;
+                                    placedLabels.push({ box: labelBox });
+                                    break;
+                                }
+                                
+                                // If no candidate worked, use fallback
+                                if (finalX === undefined) {
+                                    finalX = xScale(point.x);
+                                    finalY = yScale(point.y) - 16;
+                                    finalTextAnchor = 'middle';
+                                    
+                                    let fbBoxX = finalX - labelWidth/2;
+                                    let fbBoxY = finalY - labelHeight;
+                                    if (fbBoxX < 0) {
+                                        finalX = labelWidth/2;
+                                        fbBoxX = 0;
+                                    } else if (fbBoxX + labelWidth > boundsWidth) {
+                                        finalX = boundsWidth - labelWidth/2;
+                                        fbBoxX = boundsWidth - labelWidth;
+                                    }
+                                    if (fbBoxY < 0) {
+                                        finalY = labelHeight;
+                                        fbBoxY = 0;
+                                    } else if (fbBoxY + labelHeight > boundsHeight) {
+                                        finalY = boundsHeight;
+                                        fbBoxY = boundsHeight - labelHeight;
+                                    }
+                                    placedLabels.push({ box: { x: fbBoxX, y: fbBoxY, width: labelWidth, height: labelHeight } });
+                                }
+                                
+                                finalPositions.push({ x: finalX, y: finalY, textAnchor: finalTextAnchor, point });
+                            });
+                            
+                            // Single render path for all labels
+                            return (
+                                <>
+                                    {finalPositions.map((lp, idx) => (
+                                        <>
+                                            <line
+                                                key={`year-line-${idx}`}
+                                                x1={xScale(lp.point.x)}
+                                                y1={yScale(lp.point.y)}
+                                                x2={lp.x}
+                                                y2={lp.y}
+                                                stroke="#999"
+                                                strokeWidth={0.8}
+                                            />
+                                            <text
+                                                key={`year-label-${idx}`}
+                                                x={lp.x}
+                                                y={lp.y}
+                                                fontSize={labelFontSize}
+                                                textAnchor={lp.textAnchor}
+                                                fill="#333"
+                                                fontFamily={FONT_FAMILY}
+                                            >
+                                                {lp.point.year}
+                                            </text>
+                                        </>
+                                    ))}
+                                </>
+                            );
+                        })()}
                         
                         {/* Axes */}
                         <AxisBottom 
                             xScale={xScale} 
                             pixelsPerTick={100} 
                             boundsHeight={boundsHeight} 
-                            label={xAxisLabel}
+                            label={effectiveXAxisLabel}
                             showVerticalGrid={false}
                             labelFontSize={axisLabelFontSize}
                             tickFontSize={tickFontSize}
@@ -652,6 +985,9 @@ export const ScatterplotWithRegression = ({
                     </g>
                 </svg>
                 
+                {/* Tooltip */}
+                <Tooltip interactionData={hoveredPoint} />
+
                 {/* Slider - GDP range */}
                 <div className="mt-4 px-2 flex items-center gap-4">
                     <Slider
@@ -660,18 +996,19 @@ export const ScatterplotWithRegression = ({
                         max={gdpRange[1]}
                         onChange={setXDomain}
                         label="GDP per capita range"
-                        unit="$USD"
+                        unit={selectedPredictorType === 'CHF_LCU' ? 'CHF' : '$USD'}
                     />
                     <button
                         onClick={() => {
+                            const gdpKey = selectedPredictorType === 'CHF_LCU' ? 'gdp_lcu' : 'gdp_usd';
                             if (selectedMetric) {
                                 const metricData = data.filter(d => d[selectedMetric] !== null && d[selectedMetric] !== undefined);
-                                const metricX = metricData.map(d => d.x).filter(x => x != null);
+                                const metricX = metricData.map(d => d[gdpKey]).filter(x => x != null);
                                 if (metricX.length > 0) {
                                     setXDomain(d3.extent(metricX));
                                     return;
                                 }
-                                setXDomain(gdpRange);  // ← Now inside the if(selectedMetric) block
+                                setXDomain(gdpRange);
                             } else {
                                 setXDomain(gdpRange);
                             }
@@ -707,6 +1044,19 @@ export const ScatterplotWithRegression = ({
                         placeholder="Search for a metric"
                         style={{ fontFamily: FONT_FAMILY, fontSize: itemFontSize }}
                     />
+                </div>
+                
+                {/* Predictor type selector */}
+                <div className="mb-4">
+                    <select
+                        value={selectedPredictorType}
+                        onChange={(e) => setSelectedPredictorType(e.target.value)}
+                        className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        style={{ fontFamily: FONT_FAMILY, fontSize: itemFontSize }}
+                    >
+                        <option value="CHF_LCU">GDP : CHF (constant)</option>
+                        <option value="current_USD">GDP : USD (current)</option>
+                    </select>
                 </div>
                 
                 {/* Model type filter dropdown */}
@@ -850,7 +1200,7 @@ export const ScatterplotWithRegression = ({
                 <div className="space-y-1">
                     {filteredSeriesKeys.map((key) => {
                         const isSelected = selectedMetric === key;
-                        const regResult = regressionResults.find(r => r.metric_name === key);
+                        const regResult = regressionResults.find(r => r.target_metric === key && r.predictor_type === selectedPredictorType);
                         
                         // Get database name for color (WISE, SPI2025, etc.)
                         const metricMetadata = metadata.find(m => m.full_name === key);
