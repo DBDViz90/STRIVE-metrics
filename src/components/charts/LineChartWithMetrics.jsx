@@ -39,6 +39,10 @@ function getCategoryFromName(metricName) {
  * e.g., "WISE_Composite Measure of Wellbeing" → "Composite Measure of Wellbeing (WISE)"
  */
 function formatMetricName(name) {
+    // Special formatting for GDP metrics
+    if (name === 'GDP_GDP_current_USD_WorldBank_per_capita') return 'GDP per capita in USD (current)';
+    if (name === 'GDP_GDP_constant_LCU_WorldBank_per_capita') return 'GDP per capita in CHF (constant LCU)';
+    
     const dbPrefix = getCategoryFromName(name);
     if (dbPrefix === 'Other') return name.replace(/_/g, ' ');
     // Extract the actual prefix from the name (before first underscore)
@@ -100,6 +104,7 @@ function getR2Value(regression) {
  * @param {Function} [props.onPredictorChange] - Callback when predictor type changes
  * @param {number} [props.paneWidth] - Current pane width (controlled)
  * @param {Function} [props.onPaneWidthChange] - Callback when pane width changes
+ * @param {Function} [props.onSwitchToLineChart] - Callback to switch to line chart (no-op for line chart)
  * @param {string} [props.xAxisLabel='Year'] - Label for x-axis
  * @param {string} [props.yAxisLabel='Metric Value'] - Label for y-axis
  * @param {string} [props.title=''] - Chart title
@@ -123,6 +128,7 @@ export const LineChartWithMetrics = ({
     onPredictorChange: externalOnPredictorChange,
     paneWidth: externalPaneWidth,
     onPaneWidthChange: externalOnPaneWidthChange,
+    onSwitchToLineChart,
     xAxisLabel = 'Year',
     yAxisLabel = 'Metric Value',
     title = '',
@@ -168,6 +174,15 @@ export const LineChartWithMetrics = ({
     const MOBILE_BREAKPOINT = 768;
     const MARGIN = { top: 105, right: 30, bottom: 80, left: 110 };
     const containerRef = useRef(null);
+    const metricListRef = useRef(null);
+    
+    // Auto-scroll to selected metric
+    useEffect(() => {
+        if (selectedMetric && metricListRef.current) {
+            const el = metricListRef.current.querySelector(`[data-metric-key="${selectedMetric}"]`);
+            el?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+    }, [selectedMetric]);
     
     // Responsive layout
     const isMobileLayout = width < MOBILE_BREAKPOINT;
@@ -289,7 +304,7 @@ export const LineChartWithMetrics = ({
 
     // All model type display categories with direction (using arrows)
     const ALL_MODEL_TYPES = useMemo(() => [
-        'Constant', 'Undefined',
+        'Undefined', 'Constant', 
         '↑ Linear', '↓ Linear',
         '↑ Saturating', '↓ Saturating'
     ], []);
@@ -442,10 +457,12 @@ export const LineChartWithMetrics = ({
         if (lineData.length === 0) return [0, 1];
         const [minY, maxY] = d3.extent(lineData, d => d.value);
         const padding = (maxY - minY) * 0.1;
-        return [
-            minY !== undefined ? minY - padding : 0,
-            maxY !== undefined ? maxY + padding : 1
-        ];
+        const domainMin = minY !== undefined ? minY - padding : 0;
+        const domainMax = maxY !== undefined ? maxY + padding : 1;
+        // Clamp minimum to 0 if all values are non-negative
+        const allNonNegative = lineData.every(d => d.value >= 0);
+        const finalMin = allNonNegative ? Math.max(0, domainMin) : domainMin;
+        return [finalMin, domainMax];
     }, [lineData]);
 
     // X and Y scales
@@ -503,7 +520,7 @@ export const LineChartWithMetrics = ({
 
     // Check if a metric's display category matches selected model types
     const matchesModelFilter = useCallback((metricName) => {
-        if (selectedModelTypes.length === 0) return true;
+        if (selectedModelTypes.length === 0) return false; // Nothing selected = filter out everything
         const displayCategory = metricToDisplayCategory[metricName];
         if (!displayCategory) return false;
         return selectedModelTypes.includes(displayCategory);
@@ -511,26 +528,55 @@ export const LineChartWithMetrics = ({
 
     // Filter and sort metric list
     const filteredSeriesKeys = useMemo(() => {
-        let result = seriesKeys.filter(key => {
+        const gdpMetrics = ['GDP_GDP_current_USD_WorldBank_per_capita', 'GDP_GDP_constant_LCU_WorldBank_per_capita'];
+        
+        // Always include GDP metrics at top (unaffected by filters)
+        const gdpInList = gdpMetrics.filter(key => seriesKeys.includes(key));
+        
+        // Regular metrics with all filters applied
+        let regularMetrics = seriesKeys.filter(key => {
+            const isGDP = gdpMetrics.includes(key);
             const matchesSearch = key.toLowerCase().includes(searchQuery.toLowerCase());
             const category = metricToCategory[key];
             const matchesCategory = category && selectedCategories.includes(category);
             const matchesModel = matchesModelFilter(key);
-            return matchesSearch && matchesCategory && matchesModel;
+            return !isGDP && matchesSearch && matchesCategory && matchesModel;
         });
         
+        // Sort both groups
         if (sortBy === 'n_observations') {
-            result.sort((a, b) => {
+            const sortFn = (a, b) => {
                 const obsA = regressionResults.find(r => r.target_metric === a && r.predictor_type === selectedPredictorType)?.n_observations || 0;
                 const obsB = regressionResults.find(r => r.target_metric === b && r.predictor_type === selectedPredictorType)?.n_observations || 0;
                 return obsB - obsA;
-            });
+            };
+            gdpInList.sort(sortFn);
+            regularMetrics.sort(sortFn);
+        } else if (sortBy === 'r2_desc' || sortBy === 'r2_asc') {
+            const getR2 = (metric) => {
+                const reg = regressionResults.find(r => r.target_metric === metric && r.predictor_type === selectedPredictorType);
+                if (!reg) return -Infinity;
+                return Math.max(
+                    reg.r2_linear || 0,
+                    reg.r2_log || 0,
+                    reg.r2_mm || 0,
+                    reg.r2_expsat || 0
+                );
+            };
+            const sortFn = (a, b) => {
+                const r2A = getR2(a);
+                const r2B = getR2(b);
+                return sortBy === 'r2_desc' ? r2B - r2A : r2A - r2B;
+            };
+            gdpInList.sort(sortFn);
+            regularMetrics.sort(sortFn);
         } else {
-            // alphabetical / name
-            result.sort((a, b) => a.localeCompare(b));
+            gdpInList.sort((a, b) => a.localeCompare(b));
+            regularMetrics.sort((a, b) => a.localeCompare(b));
         }
         
-        return result;
+        // Prepend GDP metrics to the list
+        return [...gdpInList, ...regularMetrics];
     }, [seriesKeys, searchQuery, sortBy, regressionResults, selectedCategories, selectedModelTypes, matchesModelFilter, metricToCategory]);
     
 
@@ -542,10 +588,13 @@ export const LineChartWithMetrics = ({
     
     const formatValue = (value) => {
         if (value === null || value === undefined) return 'N/A';
-        if (Math.abs(value) >= 1000000) return value.toFixed(0);
-        if (Math.abs(value) >= 1000) return value.toFixed(1);
-        if (Math.abs(value) >= 1) return value.toFixed(2);
-        if (Math.abs(value) >= 0.01) return value.toFixed(3);
+        const abs = Math.abs(value);
+        if (abs >= 1000000000000) return `${(value / 1000000000000).toFixed(abs % 1000000000000 === 0 ? 0 : 1)}T`;
+        if (abs >= 1000000000) return `${(value / 1000000000).toFixed(abs % 1000000000 === 0 ? 0 : 1)}B`;
+        if (abs >= 1000000) return `${(value / 1000000).toFixed(abs % 1000000 === 0 ? 0 : 1)}M`;
+        if (abs >= 1000) return `${(value / 1000).toFixed(abs % 1000 === 0 ? 0 : 1)}K`;
+        if (abs >= 1) return value.toFixed(2);
+        if (abs >= 0.01) return value.toFixed(3);
         return value.toFixed(4);
     };
 
@@ -630,7 +679,7 @@ export const LineChartWithMetrics = ({
                             )() : title}
                             {regressionForMetric && selectedMetric && (
                                 <tspan x={chartWidth / 2} dy={30} fontSize={titleFontSize * 0.8} fill="#666">
-                                    Best fit: {regressionForMetric.best_model === 'other' ? 'undefined' : regressionForMetric.best_model}
+                                    Best fit: {regressionForMetric.best_model === 'other' ? `undefined (Best fit R² = ${getR2Value(regressionForMetric)?.toFixed(3)})` : regressionForMetric.best_model}
                                     {regressionForMetric.best_model !== 'other' && getR2Value(regressionForMetric) && ` (R² = ${getR2Value(regressionForMetric).toFixed(3)})`}
                                 </tspan>
                             )}
@@ -641,6 +690,28 @@ export const LineChartWithMetrics = ({
                             )}
                         </text>
                     )}
+                    
+                    {/* No data message */}
+                    {selectedMetric && lineData.length === 0 && (() => {
+                        const message = "No data matching with GDP year range";
+                        const fontSize = titleFontSize * 2;
+
+                        if (message.length > 30) {
+                            const words = message.split(' ');
+                            const mid = Math.ceil(words.length / 2);
+                            return (
+                                <text x={chartWidth / 2} y={chartHeight / 2} fontSize={fontSize} textAnchor="middle" fill="#999" fontFamily={FONT_FAMILY}>
+                                    <tspan x={chartWidth / 2} dy={0}>{words.slice(0, mid).join(' ')}</tspan>
+                                    <tspan x={chartWidth / 2} dy={fontSize * 1.2}>{words.slice(mid).join(' ')}</tspan>
+                                </text>
+                            );
+                        }
+                        return (
+                            <text x={chartWidth / 2} y={chartHeight / 2} fontSize={fontSize} textAnchor="middle" fill="#999" fontFamily={FONT_FAMILY}>
+                                {message}
+                            </text>
+                        );
+                    })()}
                     
                     {/* Chart Group */}
                     <g
@@ -668,8 +739,8 @@ export const LineChartWithMetrics = ({
                             <path
                                 d={lineBuilder(lineData)}
                                 fill="none"
-                                stroke={metricColor}
-                                strokeWidth={3}
+                                stroke="black"
+                                strokeWidth={2}
                             />
                         )}
                         
@@ -694,10 +765,10 @@ export const LineChartWithMetrics = ({
                                     key={i}
                                     cx={xScale(point.year)}
                                     cy={yScale(point.value)}
-                                    r={6}
+                                    r={3}
                                     fill={"black"}
                                     fillOpacity={isHovered ? 1 : 0.7}
-                                    stroke="white"
+                                    stroke="none"
                                     strokeWidth={1.5}
                                 />
                             );
@@ -914,8 +985,11 @@ export const LineChartWithMetrics = ({
                         className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                         style={{ fontFamily: FONT_FAMILY, fontSize: itemFontSize }}
                     >
-                        <option value="n_observations">Sort by: # of datapoints (high to low)</option>
                         <option value="alphabetical">Sort by: Name (A-Z)</option>
+                        <option value="n_observations">Sort by: # of datapoints (high to low)</option>
+                        <option value="r2_desc">Sort by: R² (best to worst)</option>
+                        <option value="r2_asc">Sort by: R² (worst to best)</option>
+                        
                     </select>
                 </div>
                 
@@ -936,8 +1010,23 @@ export const LineChartWithMetrics = ({
                 </div>
                 
                 {/* Metric List */}
-                <div className="space-y-1">
-                    {filteredSeriesKeys.map((key) => {
+                <div 
+                    className="space-y-1"
+                    ref={metricListRef}
+                    tabIndex={0}
+                    onKeyDown={(e) => {
+                        if (!filteredSeriesKeys.length) return;
+                        const currentIndex = selectedMetric ? filteredSeriesKeys.indexOf(selectedMetric) : -1;
+                        if (e.key === 'ArrowUp' && currentIndex > 0) {
+                            e.preventDefault();
+                            handleSelectMetric(filteredSeriesKeys[currentIndex - 1]);
+                        } else if (e.key === 'ArrowDown' && currentIndex < filteredSeriesKeys.length - 1) {
+                            e.preventDefault();
+                            handleSelectMetric(filteredSeriesKeys[currentIndex + 1]);
+                        }
+                    }}
+                >
+                    {filteredSeriesKeys.map((key, index) => {
                         const isSelected = selectedMetric === key;
                         const regResult = regressionResults.find(r => r.target_metric === key && r.predictor_type === selectedPredictorType);
                         
@@ -946,14 +1035,22 @@ export const LineChartWithMetrics = ({
                         const dbName = metricMetadata?.database_name || getCategoryFromName(key);
                         const color = CATEGORY_COLORS[dbName] || COLORS[0];
                         
+                        // Check if we're transitioning from GDP metrics to regular metrics
+                        const gdpMetrics = ['GDP_GDP_current_USD_WorldBank_per_capita', 'GDP_GDP_constant_LCU_WorldBank_per_capita'];
+                        const isTransition = index > 0 && 
+                            gdpMetrics.includes(filteredSeriesKeys[index - 1]) && 
+                            !gdpMetrics.includes(key);
+                        
                         return (
-                            <div 
-                                key={key}
-                                className={`flex items-center gap-2 p-1 rounded cursor-pointer transition-colors ${
-                                    isSelected ? 'bg-blue-50' : 'hover:bg-gray-50'
-                                }`}
-                                onClick={() => handleSelectMetric(key)}
-                            >
+                            <>
+                                {isTransition && <hr className="my-2 border-gray-300" />}
+                                <div 
+                                    data-metric-key={key}
+                                    className={`flex items-center gap-2 p-1 rounded cursor-pointer transition-colors ${
+                                        isSelected ? 'bg-blue-50' : 'hover:bg-gray-50'
+                                    }`}
+                                    onClick={() => handleSelectMetric(key)}
+                                >
                                 {/* Color indicator */}
                                 <div 
                                     className="w-4 h-4 rounded border-2 shrink-0"
@@ -986,7 +1083,8 @@ export const LineChartWithMetrics = ({
                                     </span>
                                 )}
                             </div>
-                        );
+                        </>
+                    );
                     })}
                 </div>
                 

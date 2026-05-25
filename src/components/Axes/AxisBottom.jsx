@@ -22,7 +22,15 @@ export const AxisBottom = ({
     showVerticalGrid = true, 
     labelFontSize = 20, 
     tickFontSize = 15,
-    tickFormat = (v) => v.toString()  // Default: convert to string
+    tickFormat = (v) => {
+        if (typeof v !== 'number') return String(v);
+        const abs = Math.abs(v);
+        if (abs >= 1000000000000) return `${(v / 1000000000000).toFixed(abs % 1000000000000 === 0 ? 0 : 1)}T`;
+        if (abs >= 1000000000) return `${(v / 1000000000).toFixed(abs % 1000000000 === 0 ? 0 : 1)}B`;
+        if (abs >= 1000000) return `${(v / 1000000).toFixed(abs % 1000000 === 0 ? 0 : 1)}M`;
+        if (abs >= 1000) return `${(v / 1000).toFixed(abs % 1000 === 0 ? 0 : 1)}K`;
+        return String(v);
+    }
 }) => {
   const range = xScale.range();
   const width = range[1] - range[0];
@@ -60,7 +68,7 @@ export const AxisBottom = ({
       />
       {ticks.map((value) => (
         <g key={value} transform={`translate(${xScale(value)}, 0)`}>
-          {showVerticalGrid && <line y1={0} y2={-boundsHeight - 5} stroke="currentColor" opacity={0.1} />}
+          {showVerticalGrid && <line y1={0} y2={-boundsHeight - 5} stroke="currentColor" opacity={0.1} style={{ pointerEvents: 'none' }} />}
           <line y2={TICK_LENGTH} stroke="currentColor" />
           <text
             style={{

@@ -4,10 +4,11 @@
  * Uses SingleMetricExplorer for single-metric-at-a-time visualization
  */
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { ResponsiveScatterplotWithRegression } from './components/charts/ScatterplotWithRegression';
 import { ResponsiveLineChartWithMetrics } from './components/charts/LineChartWithMetrics';
 import { loadSwissMetrics, loadRegressionResults, loadMetricsByCategory, loadMetadata } from './lib/data-loader';
+import { Slider } from './components/ui/Slider';
 
 // Custom color scale for different categories
 import * as d3 from 'd3';
@@ -23,12 +24,24 @@ export default function App() {
     const [selectedPredictorType, setSelectedPredictorType] = useState('CHF_LCU');
     const [paneWidth, setPaneWidth] = useState(200);
     const [metadata, setMetadata] = useState([]);
+    // GDP range slider state for scatter plot
+    const [xDomain, setXDomain] = useState(null);
     
     const [metricsData, setMetricsData] = useState({ data: [], seriesKeys: [] });
     const [regressionResults, setRegressionResults] = useState([]);
     const [categories, setCategories] = useState({});
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState(null);
+
+    // Calculate GDP range for scatter plot slider
+    const gdpRange = useMemo(() => {
+        if (metricsData.data.length === 0) return [0, 100];
+        const gdpKey = selectedPredictorType === 'CHF_LCU' ? 'gdp_lcu' : 'gdp_usd';
+        const allX = metricsData.data.map(d => d[gdpKey]).filter(x => x !== null && x !== undefined);
+        if (allX.length === 0) return [0, 100];
+        const [minX, maxX] = d3.extent(allX);
+        return [minX || 0, maxX || 100];
+    }, [metricsData.data, selectedPredictorType]);
 
     // Load all data on mount
     useEffect(() => {
@@ -157,6 +170,7 @@ export default function App() {
                             metadata={metadata}
                             selectedMetric={selectedMetric}
                             onSelectMetric={setSelectedMetric}
+                            onSwitchToLineChart={() => setChartType('line')}
                             searchQuery={searchQuery}
                             onSearchChange={setSearchQuery}
                             sortBy={sortBy}
@@ -169,6 +183,9 @@ export default function App() {
                             onPredictorChange={setSelectedPredictorType}
                             paneWidth={paneWidth}
                             onPaneWidthChange={setPaneWidth}
+                            xDomain={xDomain}
+                            onXDomainChange={setXDomain}
+                            gdpRange={gdpRange}
                             xAxisLabel="GDP per capita ($USD)"
                             yAxisLabel="Metric Value"
                             title="Swiss Metrics Explorer"
@@ -182,6 +199,7 @@ export default function App() {
                             metadata={metadata}
                             selectedMetric={selectedMetric}
                             onSelectMetric={setSelectedMetric}
+                            onSwitchToLineChart={() => {}} // No-op for line chart
                             searchQuery={searchQuery}
                             onSearchChange={setSearchQuery}
                             sortBy={sortBy}
@@ -202,28 +220,62 @@ export default function App() {
                     )}
                 </div>
 
+                {/* GDP Range Slider for Scatter Plot */}
+                {chartType === 'scatter' && (
+                    <div className="mt-4 px-2 flex items-center gap-4 rounded-lg shadow-sm ">
+                        <Slider
+                            value={xDomain || gdpRange}
+                            min={gdpRange[0]}
+                            max={gdpRange[1]}
+                            onChange={setXDomain}
+                            label="GDP per capita range"
+                            unit={selectedPredictorType === 'CHF_LCU' ? 'CHF' : '$USD'}
+                        />
+                        <button
+                            onClick={() => {
+                                const gdpKey = selectedPredictorType === 'CHF_LCU' ? 'gdp_lcu' : 'gdp_usd';
+                                if (selectedMetric) {
+                                    const metricData = metricsData.data.filter(d => d[selectedMetric] !== null && d[selectedMetric] !== undefined);
+                                    const metricX = metricData.map(d => d[gdpKey]).filter(x => x != null);
+                                    if (metricX.length > 0) {
+                                        setXDomain(d3.extent(metricX));
+                                        return;
+                                    }
+                                    setXDomain(gdpRange);
+                                } else {
+                                    setXDomain(gdpRange);
+                                }
+                            }}
+                            className="px-3 py-1 text-xs bg-gray-100 rounded hover:bg-gray-200 transition-colors whitespace-nowrap"
+                        >
+                            Reset range
+                        </button>
+                    </div>
+                )}
+
                 {/* Info Panel */}
-                <div className="mt-20 bg-blue-50 border border-blue-200 rounded-lg p-4">
+                <div className="mt-6 bg-blue-50 border border-blue-200 rounded-lg p-4">
                     <h3 className="font-semibold text-blue-800 mb-2">User tips</h3>
-                    <p className="text-sm text-blue-700">
+                    <div className="text-sm text-blue-700">
                         <ul className="list-disc list-inside">
                             <li> Right pane
                                 <ul className="list-disc list-inside pl-6">
-                                    <li>2 GDP predictor metrics can be selected in the right pane : GDP in current USD and GDP in constant CHF (LCU)</li>
-                                    <li>Can filter by model type, and also by increasing or decreasing regression </li>
-                                    <li>Can filter categories. For now those categories come from the databases metadata </li>
-                                    <li>Can sort the metric list order by alphabetical order or by the number of datapoints </li>
+                                    <li>2 GDP predictor metrics can be selected through the second button in the right pane : GDP in constant CHF (LCU) and GDP in current USD</li>
+                                    <li>Clicking one of the 2 GDPs metrics at the top of the list displays the corresponding line chart</li>
+                                    <li>The scrolling metric list can be filtered by model type, and also by increasing or decreasing regression </li>
+                                    <li>Can also filter by categories. For now those categories come from the databases metadata </li>
+                                    <li>Can sort the metric list order by alphabetical order, by the number of datapoints, or by the R^2 value </li>
                                 </ul>
                             </li>
                             <li> For the scatter plot
                                 <ul className="list-disc list-inside pl-6">
                                     <li>Hovering shows connected lines between data points, going from the earliest year to the latest year, in order</li>
-                                    <li>Hovering also shows a tooltip of the metric (y axis) value, and the GDP (x axis) value</li>
+                                    <li>Hovering also shows a tooltip displaying the corresponding year, the metric (y-axis) value, and the GDP (x axis) value</li>
                                 </ul>
                             </li>
                             
                         </ul>
-                    </p>
+                    </div>
                 </div>
 
             </main>

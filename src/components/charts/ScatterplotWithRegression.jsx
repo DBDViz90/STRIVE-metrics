@@ -7,7 +7,6 @@ import { useState, useMemo, useRef, useCallback, useEffect } from 'react';
 import * as d3 from 'd3';
 import { AxisLeft } from '../Axes/AxisLeft';
 import { AxisBottom } from '../Axes/AxisBottom';
-import { Slider } from '../ui/Slider';
 import { SearchBar } from '../ui/SearchBar';
 import { Tooltip } from '../ui/Tooltip';
 import { useDimensions } from '../../../hooks/use-dimensions';
@@ -51,6 +50,10 @@ function rectsIntersect(a, b) {
  * e.g., "WISE_Composite Measure of Wellbeing" → "Composite Measure of Wellbeing (WISE)"
  */
 function formatMetricName(name) {
+    // Special formatting for GDP metrics
+    if (name === 'GDP_GDP_current_USD_WorldBank_per_capita') return 'GDP per capita in USD (current)';
+    if (name === 'GDP_GDP_constant_LCU_WorldBank_per_capita') return 'GDP per capita in CHF (constant LCU)';
+    
     const dbPrefix = getCategoryFromName(name);
     if (dbPrefix === 'Other') return name.replace(/_/g, ' ');
     // Extract the actual prefix from the name (before first underscore)
@@ -163,6 +166,10 @@ function generateRegressionPoints(modelType, params, xRange, numPoints = 100) {
  * @param {Function} [props.onPredictorChange] - Callback when predictor type changes
  * @param {number} [props.paneWidth] - Current pane width (controlled)
  * @param {Function} [props.onPaneWidthChange] - Callback when pane width changes
+ * @param {Function} [props.onSwitchToLineChart] - Callback to switch to line chart (for GDP metrics)
+ * @param {number[]} [props.xDomain] - Current x-domain (controlled)
+ * @param {Function} [props.onXDomainChange] - Callback when x-domain changes
+ * @param {number[]} [props.gdpRange] - GDP range for x-axis
  * @param {string} [props.xAxisLabel='GDP per capita ($USD)'] - Label for x-axis
  * @param {string} [props.yAxisLabel='Metric Value'] - Label for y-axis
  * @param {string} [props.title=''] - Chart title
@@ -186,6 +193,10 @@ export const ScatterplotWithRegression = ({
     onPredictorChange: externalOnPredictorChange,
     paneWidth: externalPaneWidth,
     onPaneWidthChange: externalOnPaneWidthChange,
+    onSwitchToLineChart,
+    xDomain: externalXDomain,
+    onXDomainChange: externalOnXDomainChange,
+    gdpRange: externalGdpRange,
     xAxisLabel = 'GDP per capita ($USD)',
     yAxisLabel = 'Metric Value',
     title = '',
@@ -216,13 +227,29 @@ export const ScatterplotWithRegression = ({
     const paneWidth = externalPaneWidth !== undefined ? externalPaneWidth : internalPaneWidth;
     const setPaneWidth = externalOnPaneWidthChange !== undefined ? externalOnPaneWidthChange : setInternalPaneWidth;
     
+    // xDomain and gdpRange state (controlled from App.jsx for scatter plot)
+    const xDomain = externalXDomain !== undefined ? externalXDomain : null;
+    const setXDomain = externalOnXDomainChange !== undefined ? externalOnXDomainChange : (() => {});
+    const gdpRange = externalGdpRange !== undefined ? externalGdpRange : [0, 100];
+    
     // Local state (not shared)
-    const [xDomain, setXDomain] = useState(null);
     const [isResizing, setIsResizing] = useState(false);
     const [showCategoryDropdown, setShowCategoryDropdown] = useState(false);
     const [showModelDropdown, setShowModelDropdown] = useState(false);
     const [hoveredIndex, setHoveredIndex] = useState(null);
     const [hoveredPoint, setHoveredPoint] = useState(null);
+    
+    // Refs
+    const containerRef = useRef(null);
+    const metricListRef = useRef(null);
+    
+    // Auto-scroll to selected metric
+    useEffect(() => {
+        if (selectedMetric && metricListRef.current) {
+            const el = metricListRef.current.querySelector(`[data-metric-key="${selectedMetric}"]`);
+            el?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+    }, [selectedMetric]);
     
     // Constants
     const MIN_PANE_WIDTH = 150;
@@ -230,14 +257,15 @@ export const ScatterplotWithRegression = ({
     const GAP = 16;
     const MOBILE_BREAKPOINT = 768;
     const MARGIN = { top: 105, right: 30, bottom: 80, left: 110 };
-    const containerRef = useRef(null);
     
     // Responsive layout
     const isMobileLayout = width < MOBILE_BREAKPOINT;
     const effectivePaneWidth = isMobileLayout ? 0 : paneWidth;
     const effectiveGap = isMobileLayout ? 0 : GAP;
-    const chartWidth = width - effectivePaneWidth - effectiveGap;
-    const chartHeight = isMobileLayout ? height - 250 : height;
+    // Enforce square chart area
+    const availableWidth = width - effectivePaneWidth - effectiveGap;
+    const chartHeight = availableWidth;
+    const chartWidth = availableWidth;
     
     // Font sizes based on width
     const titleFontSize = Math.max(14, width * 0.02);
@@ -350,7 +378,7 @@ export const ScatterplotWithRegression = ({
     
     // All model type display categories with direction (using arrows)
     const ALL_MODEL_TYPES = useMemo(() => [
-        'Constant', 'Undefined',
+        'Undefined', 'Constant',
         '↑ Linear', '↓ Linear',
         '↑ Saturating', '↓ Saturating'
     ], []);
@@ -432,16 +460,6 @@ export const ScatterplotWithRegression = ({
         return regressionResults.find(r => r.target_metric === selectedMetric && r.predictor_type === selectedPredictorType);
     }, [selectedMetric, regressionResults, selectedPredictorType]);
     
-    // Get GDP range from data based on selected predictor
-    const gdpRange = useMemo(() => {
-        if (data.length === 0) return [0, 100];
-        const gdpKey = selectedPredictorType === 'CHF_LCU' ? 'gdp_lcu' : 'gdp_usd';
-        const allX = data.map(d => d[gdpKey]).filter(x => x !== null && x !== undefined);
-        if (allX.length === 0) return [0, 100];
-        const [minX, maxX] = d3.extent(allX);
-        return [minX || 0, maxX || 100];
-    }, [data, selectedPredictorType]);
-
     // Get year range for a specific metric
     const getYearRangeForMetric = useCallback((metric) => {
         if (!metric || data.length === 0) return null;
@@ -481,8 +499,8 @@ export const ScatterplotWithRegression = ({
             }
         }
     }, [selectedMetric, data, gdpRange, regressionForMetric, selectedPredictorType]);
-    
-    // Effective xDomain (controlled by slider)
+
+    // Effective xDomain (controlled by slider from App.jsx)
     const effectiveXDomain = xDomain || gdpRange;
     
     // Filter data based on x-domain
@@ -526,19 +544,26 @@ export const ScatterplotWithRegression = ({
         if (allYValues.length === 0) return [0, 1];
         const [minY, maxY] = d3.extent(allYValues);
         const range = maxY - minY;
+        // Check only data points (not regression line) for non-negativity
+        const filteredDataYValues = dataYValues.filter(y => y !== null && y !== undefined && !isNaN(y) && isFinite(y));
+        const allNonNegative = filteredDataYValues.every(y => y >= 0);
         
-        // Ensure minimum range to prevent degenerate scales (e.g., constant metrics)
-        const minRange = 2; // Minimum visual range
-        if (Math.abs(range) < minRange) {
+        // Handle constant/near-constant metrics with proportional range
+        if (Math.abs(range) < 1e-10) {
             const center = (minY + maxY) / 2;
-            return [center - minRange/2, center + minRange/2];
+            const valueScale = Math.max(Math.abs(center), 1);
+            let domainMin = center - valueScale * 0.1;
+            let domainMax = center + valueScale * 0.1;
+            if (allNonNegative) domainMin = Math.max(0, domainMin);
+            return [domainMin, domainMax];
         }
         
         const padding = range * 0.1;
-        return [
-            minY !== undefined ? minY - padding : 0,
-            maxY !== undefined ? maxY + padding : 1
-        ];
+        const domainMin = minY !== undefined ? minY - padding : 0;
+        const domainMax = maxY !== undefined ? maxY + padding : 1;
+        // Clamp minimum to 0 if all data points are non-negative
+        const finalMin = allNonNegative ? Math.max(0, domainMin) : domainMin;
+        return [finalMin, domainMax];
     }, [scatterData, regressionPoints]);
     
     // X and Y scales
@@ -565,8 +590,15 @@ export const ScatterplotWithRegression = ({
     
     // Handle metric selection
     const handleSelectMetric = useCallback((metric) => {
-        setSelectedMetric(prev => prev === metric ? null : metric);
-    }, []);
+        const gdpMetrics = ['GDP_GDP_current_USD_WorldBank_per_capita', 'GDP_GDP_constant_LCU_WorldBank_per_capita'];
+        if (gdpMetrics.includes(metric) && onSwitchToLineChart) {
+            // Switch to line chart for GDP metrics
+            onSwitchToLineChart();
+            setSelectedMetric(metric);
+        } else {
+            setSelectedMetric(prev => prev === metric ? null : metric);
+        }
+    }, [onSwitchToLineChart]);
     
     const clearSelection = useCallback(() => {
         setSelectedMetric(null);
@@ -574,7 +606,7 @@ export const ScatterplotWithRegression = ({
     
     // Check if a metric's display category matches selected model types
     const matchesModelFilter = useCallback((metricName) => {
-        if (selectedModelTypes.length === 0) return true;
+        if (selectedModelTypes.length === 0) return false; // Nothing selected = filter out everything
         const displayCategory = metricToDisplayCategory[metricName];
         if (!displayCategory) return false;
         return selectedModelTypes.includes(displayCategory);
@@ -582,26 +614,56 @@ export const ScatterplotWithRegression = ({
     
     // Filter and sort metric list
     const filteredSeriesKeys = useMemo(() => {
-        let result = seriesKeys.filter(key => {
+        const gdpMetrics = ['GDP_GDP_current_USD_WorldBank_per_capita', 'GDP_GDP_constant_LCU_WorldBank_per_capita'];
+        
+        // Always include GDP metrics at top (unaffected by filters)
+        const gdpInList = gdpMetrics.filter(key => seriesKeys.includes(key));
+        
+        // Regular metrics with all filters applied
+        let regularMetrics = seriesKeys.filter(key => {
+            const isGDP = gdpMetrics.includes(key);
             const matchesSearch = key.toLowerCase().includes(searchQuery.toLowerCase());
             const category = metricToCategory[key];
             const matchesCategory = category && selectedCategories.includes(category);
             const matchesModel = matchesModelFilter(key);
-            return matchesSearch && matchesCategory && matchesModel;
+            return !isGDP && matchesSearch && matchesCategory && matchesModel;
         });
         
+        // Sort both groups
         if (sortBy === 'n_observations') {
-            result.sort((a, b) => {
+            const sortFn = (a, b) => {
                 const obsA = regressionResults.find(r => r.target_metric === a && r.predictor_type === selectedPredictorType)?.n_observations || 0;
                 const obsB = regressionResults.find(r => r.target_metric === b && r.predictor_type === selectedPredictorType)?.n_observations || 0;
                 return obsB - obsA;
-            });
+            };
+            gdpInList.sort(sortFn);
+            regularMetrics.sort(sortFn);
+        } else if (sortBy === 'r2_desc' || sortBy === 'r2_asc') {
+            const getR2 = (metric) => {
+                const reg = regressionResults.find(r => r.target_metric === metric && r.predictor_type === selectedPredictorType);
+                if (!reg) return -Infinity;
+                return Math.max(
+                    reg.r2_linear || 0,
+                    reg.r2_log || 0,
+                    reg.r2_mm || 0,
+                    reg.r2_expsat || 0
+                );
+            };
+            const sortFn = (a, b) => {
+                const r2A = getR2(a);
+                const r2B = getR2(b);
+                return sortBy === 'r2_desc' ? r2B - r2A : r2A - r2B;
+            };
+            gdpInList.sort(sortFn);
+            regularMetrics.sort(sortFn);
         } else {
             // alphabetical / name
-            result.sort((a, b) => a.localeCompare(b));
+            gdpInList.sort((a, b) => a.localeCompare(b));
+            regularMetrics.sort((a, b) => a.localeCompare(b));
         }
         
-        return result;
+        // Prepend GDP metrics to the list
+        return [...gdpInList, ...regularMetrics];
     }, [seriesKeys, searchQuery, sortBy, regressionResults, selectedCategories, selectedModelTypes, matchesModelFilter]);
     
 
@@ -609,26 +671,32 @@ export const ScatterplotWithRegression = ({
     // Format functions
     const formatGDP = (value) => {
         if (value === null || value === undefined) return 'N/A';
-        if (value >= 1000000) return `${(value / 1000000).toFixed(2)}M`;
-        if (value >= 1000) return `${(value / 1000).toFixed(1)}K`;
+        const abs = Math.abs(value);
+        if (abs >= 1000000000000) return `${(value / 1000000000000).toFixed(abs % 1000000000000 === 0 ? 0 : 1)}T`;
+        if (abs >= 1000000000) return `${(value / 1000000000).toFixed(abs % 1000000000 === 0 ? 0 : 1)}B`;
+        if (abs >= 1000000) return `${(value / 1000000).toFixed(abs % 1000000 === 0 ? 0 : 1)}M`;
+        if (abs >= 1000) return `${(value / 1000).toFixed(abs % 1000 === 0 ? 0 : 1)}K`;
         return `${value.toFixed(2)}`;
     };
     
     const formatValue = (value) => {
         if (value === null || value === undefined) return 'N/A';
-        if (Math.abs(value) >= 1000000) return value.toFixed(0);
-        if (Math.abs(value) >= 1000) return value.toFixed(1);
-        if (Math.abs(value) >= 1) return value.toFixed(2);
-        if (Math.abs(value) >= 0.01) return value.toFixed(3);
+        const abs = Math.abs(value);
+        if (abs >= 1000000000000) return `${(value / 1000000000000).toFixed(abs % 1000000000000 === 0 ? 0 : 1)}T`;
+        if (abs >= 1000000000) return `${(value / 1000000000).toFixed(abs % 1000000000 === 0 ? 0 : 1)}B`;
+        if (abs >= 1000000) return `${(value / 1000000).toFixed(abs % 1000000 === 0 ? 0 : 1)}M`;
+        if (abs >= 1000) return `${(value / 1000).toFixed(abs % 1000 === 0 ? 0 : 1)}K`;
+        if (abs >= 1) return value.toFixed(2);
+        if (abs >= 0.01) return value.toFixed(3);
         return value.toFixed(4);
     };
     
     const getDisplayName = (name) => name.replace(/_/g, ' ');
     
     return (
-        <div ref={containerRef} className="flex flex-col md:flex-row gap-4 relative" style={{ width, height, fontFamily: FONT_FAMILY }}>
+        <div ref={containerRef} className="flex flex-col md:flex-row gap-4 relative" style={{ width, fontFamily: FONT_FAMILY }}>
             {/* Main Chart Area */}
-            <div className="flex-1 min-w-0 relative" style={{ height: isMobileLayout ? chartHeight + 250 : chartHeight + 60 }}>
+            <div className="flex-1 min-w-0 relative" style={{ height: isMobileLayout ? chartHeight + 250 : chartHeight}} >
                 <svg 
                     width={chartWidth} 
                     height={chartHeight}
@@ -665,7 +733,7 @@ export const ScatterplotWithRegression = ({
                             )() : title}
                             {regressionForMetric && selectedMetric && (
                                 <tspan x={chartWidth / 2} dy={30} fontSize={titleFontSize * 0.8} fill="#666">
-                                    Best fit: {regressionForMetric.best_model === 'other' ? 'undefined' : regressionForMetric.best_model}
+                                    Best fit: {regressionForMetric.best_model === 'other' ? `undefined (Best fit R² = ${getR2Value(regressionForMetric)?.toFixed(3)})` : regressionForMetric.best_model}
                                     {regressionForMetric.best_model !== 'other' && getR2Value(regressionForMetric) && ` (R² = ${getR2Value(regressionForMetric).toFixed(3)})`}
                                 </tspan>
                             )}
@@ -677,33 +745,39 @@ export const ScatterplotWithRegression = ({
                         </text>
                     )}
                     
+                    {selectedMetric && scatterData.length === 0 && (() => {
+                        const message = "No data matching with GDP year range";
+                        const fontSize = titleFontSize * 2;
+
+                        if (message.length > 30) {
+                            const words = message.split(' ');
+                            const mid = Math.ceil(words.length / 2);
+                            return (
+                                <text x={chartWidth / 2} y={chartHeight / 2} fontSize={fontSize} textAnchor="middle" fill="#999" fontFamily={FONT_FAMILY}>
+                                    <tspan x={chartWidth / 2} dy={0}>{words.slice(0, mid).join(' ')}</tspan>
+                                    <tspan x={chartWidth / 2} dy={fontSize * 1.2}>{words.slice(mid).join(' ')}</tspan>
+                                </text>
+                            );
+                        }
+                        return (
+                            <text x={chartWidth / 2} y={chartHeight / 2} fontSize={fontSize} textAnchor="middle" fill="#999" fontFamily={FONT_FAMILY}>
+                                {message}
+                            </text>
+                        );
+                    })()}
+                    
                     {/* Chart Group */}
                     <g
                         width={boundsWidth}
                         height={boundsHeight}
                         transform={`translate(${[MARGIN.left, MARGIN.top].join(",")})`}
                     >
-                        {/* Grid lines */}
-                        <g className="grid-lines">
-                            {yScale.ticks(5).map((value) => (
-                                <line
-                                    key={value}
-                                    x1={0}
-                                    x2={boundsWidth}
-                                    y1={yScale(value)}
-                                    y2={yScale(value)}
-                                    stroke="#e0e0e0"
-                                    strokeWidth={1}
-                                />
-                            ))}
-                        </g>
-                        
                         {/* Regression line */}
                         {regressionPoints.length > 0 && regressionForMetric && regressionForMetric.best_model !== 'other' && (
                             <path
                                 d={d3.line()
                                     .x(d => xScale(d.x))
-                                    .y(d => yScale(d.y))(regressionPoints)}
+                                    .y(d => yScale(d.y))(regressionPoints.filter(d => d.y >= yDomain[0] && d.y <= yDomain[1]))}
                                 fill="none"
                                 stroke="#8627ce"
                                 strokeWidth={3}
@@ -756,6 +830,7 @@ export const ScatterplotWithRegression = ({
                                 strokeWidth={1}
                                 strokeDasharray="3,3"
                                 opacity={0.7}
+                                style={{ pointerEvents: 'none' }}
                             />
                         )}
 
@@ -944,6 +1019,7 @@ export const ScatterplotWithRegression = ({
                                                 y2={lp.y}
                                                 stroke="#999"
                                                 strokeWidth={0.8}
+                                                style={{ pointerEvents: 'none' }}
                                             />
                                             <text
                                                 key={`year-label-${idx}`}
@@ -987,38 +1063,6 @@ export const ScatterplotWithRegression = ({
                 
                 {/* Tooltip */}
                 <Tooltip interactionData={hoveredPoint} />
-
-                {/* Slider - GDP range */}
-                <div className="mt-4 px-2 flex items-center gap-4">
-                    <Slider
-                        value={effectiveXDomain}
-                        min={gdpRange[0]}
-                        max={gdpRange[1]}
-                        onChange={setXDomain}
-                        label="GDP per capita range"
-                        unit={selectedPredictorType === 'CHF_LCU' ? 'CHF' : '$USD'}
-                    />
-                    <button
-                        onClick={() => {
-                            const gdpKey = selectedPredictorType === 'CHF_LCU' ? 'gdp_lcu' : 'gdp_usd';
-                            if (selectedMetric) {
-                                const metricData = data.filter(d => d[selectedMetric] !== null && d[selectedMetric] !== undefined);
-                                const metricX = metricData.map(d => d[gdpKey]).filter(x => x != null);
-                                if (metricX.length > 0) {
-                                    setXDomain(d3.extent(metricX));
-                                    return;
-                                }
-                                setXDomain(gdpRange);
-                            } else {
-                                setXDomain(gdpRange);
-                            }
-                        }}
-                        className="px-3 py-1 text-xs bg-gray-100 rounded hover:bg-gray-200 transition-colors whitespace-nowrap"
-                        style={{ fontFamily: FONT_FAMILY }}
-                    >
-                        Reset range
-                    </button>
-                </div>
             </div>
             
             {/* Resizer handle (hidden on mobile) */}
@@ -1033,8 +1077,8 @@ export const ScatterplotWithRegression = ({
             
             {/* Side Pane */}
             <div 
-                className={`bg-white border-l border-gray-200 p-4 rounded-lg shadow-sm overflow-y-auto ${isMobileLayout ? 'w-full order-first' : 'shrink-0'}`}
-                style={{ width: isMobileLayout ? '100%' : `${paneWidth}px` }}
+                className={`border-l border-gray-200 p-4 rounded-lg shadow-sm overflow-y-auto ${isMobileLayout ? 'w-full order-first' : 'shrink-0'}`}
+                style={{ width: isMobileLayout ? '100%' : `${paneWidth}px`, height: isMobileLayout ? 'auto' : chartHeight}}
             >
                 {/* Search Bar */}
                 <div className="mb-4">
@@ -1175,8 +1219,11 @@ export const ScatterplotWithRegression = ({
                         className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                         style={{ fontFamily: FONT_FAMILY, fontSize: itemFontSize }}
                     >
-                        <option value="n_observations">Sort by: # of datapoints (high to low)</option>
                         <option value="alphabetical">Sort by: Name (A-Z)</option>
+                        <option value="n_observations">Sort by: # of datapoints (high to low)</option>
+                        <option value="r2_desc">Sort by: R² (best to worst)</option>
+                        <option value="r2_asc">Sort by: R² (worst to best)</option>
+                        
                     </select>
                 </div>
                 
@@ -1197,8 +1244,23 @@ export const ScatterplotWithRegression = ({
                 </div>
                 
                 {/* Metric List */}
-                <div className="space-y-1">
-                    {filteredSeriesKeys.map((key) => {
+                <div 
+                    className="space-y-1"
+                    ref={metricListRef}
+                    tabIndex={0}
+                    onKeyDown={(e) => {
+                        if (!filteredSeriesKeys.length) return;
+                        const currentIndex = selectedMetric ? filteredSeriesKeys.indexOf(selectedMetric) : -1;
+                        if (e.key === 'ArrowUp' && currentIndex > 0) {
+                            e.preventDefault();
+                            handleSelectMetric(filteredSeriesKeys[currentIndex - 1]);
+                        } else if (e.key === 'ArrowDown' && currentIndex < filteredSeriesKeys.length - 1) {
+                            e.preventDefault();
+                            handleSelectMetric(filteredSeriesKeys[currentIndex + 1]);
+                        }
+                    }}
+                >
+                    {filteredSeriesKeys.map((key, index) => {
                         const isSelected = selectedMetric === key;
                         const regResult = regressionResults.find(r => r.target_metric === key && r.predictor_type === selectedPredictorType);
                         
@@ -1207,14 +1269,22 @@ export const ScatterplotWithRegression = ({
                         const dbName = metricMetadata?.database_name || getCategoryFromName(key);
                         const color = CATEGORY_COLORS[dbName] || COLORS[0];
                         
+                        // Check if we're transitioning from GDP metrics to regular metrics
+                        const gdpMetrics = ['GDP_GDP_current_USD_WorldBank_per_capita', 'GDP_GDP_constant_LCU_WorldBank_per_capita'];
+                        const isTransition = index > 0 && 
+                            gdpMetrics.includes(filteredSeriesKeys[index - 1]) && 
+                            !gdpMetrics.includes(key);
+                        
                         return (
-                            <div 
-                                key={key}
-                                className={`flex items-center gap-2 p-1 rounded cursor-pointer transition-colors ${
-                                    isSelected ? 'bg-blue-50' : 'hover:bg-gray-50'
-                                }`}
-                                onClick={() => handleSelectMetric(key)}
-                            >
+                            <>
+                                {isTransition && <hr className="my-2 border-gray-300" />}
+                                <div 
+                                    data-metric-key={key}
+                                    className={`flex items-center gap-2 p-1 rounded cursor-pointer transition-colors ${
+                                        isSelected ? 'bg-blue-50' : 'hover:bg-gray-50'
+                                    }`}
+                                    onClick={() => handleSelectMetric(key)}
+                                >
                                 {/* Color indicator */}
                                 <div 
                                     className="w-4 h-4 rounded border-2 shrink-0"
@@ -1247,7 +1317,8 @@ export const ScatterplotWithRegression = ({
                                     </span>
                                 )}
                             </div>
-                        );
+                        </>
+                    );
                     })}
                 </div>
                 
@@ -1265,18 +1336,16 @@ export const ScatterplotWithRegression = ({
 /**
  * Responsive wrapper
  */
-export const ResponsiveScatterplotWithRegression = ({ width = 800, height = 500, ...props }) => {
+export const ResponsiveScatterplotWithRegression = ({ width = 800, ...props }) => {
     const chartRef = useRef(null);
     const chartSize = useDimensions(chartRef);
     
     const finalWidth = chartSize?.width || width;
-    const finalHeight = chartSize?.height || height;
     
     return (
-        <div ref={chartRef} style={{ width: '100%', height: '100%' }}>
+        <div ref={chartRef} style={{ width: '90vw' }}>
             <ScatterplotWithRegression
                 width={finalWidth}
-                height={finalHeight}
                 {...props}
             />
         </div>

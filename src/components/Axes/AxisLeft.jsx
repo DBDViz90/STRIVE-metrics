@@ -18,7 +18,15 @@ export const AxisLeft = ({
     boundsWidth, 
     labelFontSize = 20, 
     tickFontSize = 15,
-    tickFormat = (v) => v.toString()  // Default: convert to string
+    tickFormat = (v) => {
+        if (typeof v !== 'number') return String(v);
+        const abs = Math.abs(v);
+        if (abs >= 1000000000000) return `${(v / 1000000000000).toFixed(abs % 1000000000000 === 0 ? 0 : 1)}T`;
+        if (abs >= 1000000000) return `${(v / 1000000000).toFixed(abs % 1000000000 === 0 ? 0 : 1)}B`;
+        if (abs >= 1000000) return `${(v / 1000000).toFixed(abs % 1000000 === 0 ? 0 : 1)}M`;
+        if (abs >= 1000) return `${(v / 1000).toFixed(abs % 1000 === 0 ? 0 : 1)}K`;
+        return String(v);
+    }
 }) => {
   const range = yScale.range();
   const height = range[0] - range[1];
@@ -32,7 +40,7 @@ export const AxisLeft = ({
       />
       {yScale.ticks(numberOfTicksTarget).map((value) => (
         <g key={value} transform={`translate(0, ${yScale(value)})`}>
-          <line x1={0} x2={boundsWidth} stroke="currentColor" opacity={0.1} />
+          <line x1={0} x2={boundsWidth} stroke="currentColor" opacity={0.1} style={{ pointerEvents: 'none' }} />
           <line x2={-TICK_LENGTH} stroke="currentColor" opacity={0.3} />
           <text
             style={{

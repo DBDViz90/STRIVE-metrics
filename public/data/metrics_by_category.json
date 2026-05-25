@@ -166,7 +166,7 @@
       "acronym": "WISE_UNDP-HDI-PHDI-CO2-PROD",
       "full_name": "WISE_Carbon dioxide emissions per capita (production)",
       "unit": "Tonnes",
-      "description": NaN
+      "description": null
     },
     {
       "metric_id": 176,
@@ -250,7 +250,7 @@
       "acronym": "WISE_UNDP-HDI-PHDI-MF",
       "full_name": "WISE_Material footprint per capita",
       "unit": "Tonnes",
-      "description": NaN
+      "description": null
     },
     {
       "metric_id": 106,
@@ -313,21 +313,21 @@
       "acronym": "WISE_UNDP-HDI-EYS",
       "full_name": "WISE_Expected years of schooling",
       "unit": "Years",
-      "description": NaN
+      "description": null
     },
     {
       "metric_id": 76,
       "acronym": "WISE_UNDP-HDI-GDI-EYS-F",
       "full_name": "WISE_Expected years of schooling (Female)",
       "unit": "Years",
-      "description": NaN
+      "description": null
     },
     {
       "metric_id": 77,
       "acronym": "WISE_UNDP-HDI-GDI-EYS-M",
       "full_name": "WISE_Expected years of schooling (Male)",
       "unit": "Years",
-      "description": NaN
+      "description": null
     },
     {
       "metric_id": 206,
@@ -362,35 +362,35 @@
       "acronym": "WISE_UNDP-HDI-MYS",
       "full_name": "WISE_Mean years of schooling",
       "unit": "Years",
-      "description": NaN
+      "description": null
     },
     {
       "metric_id": 84,
       "acronym": "WISE_UNDP-HDI-GDI-MYS-F",
       "full_name": "WISE_Mean years of schooling (Female)",
       "unit": "Years",
-      "description": NaN
+      "description": null
     },
     {
       "metric_id": 85,
       "acronym": "WISE_UNDP-HDI-GDI-MYS-M",
       "full_name": "WISE_Mean years of schooling (Male)",
       "unit": "Years",
-      "description": NaN
+      "description": null
     },
     {
       "metric_id": 93,
       "acronym": "WISE_UNDP-HDI-GII-SE-F",
       "full_name": "WISE_Population with at least some secondary education (Female)",
       "unit": "% Ages 25 And Older",
-      "description": NaN
+      "description": null
     },
     {
       "metric_id": 94,
       "acronym": "WISE_UNDP-HDI-GII-SE-M",
       "full_name": "WISE_Population with at least some secondary education (Male)",
       "unit": "% Ages 25 And Older",
-      "description": NaN
+      "description": null
     },
     {
       "metric_id": 44,
@@ -647,14 +647,14 @@
       "acronym": "WISE_UNDP-HDI-GII-PR-M",
       "full_name": "WISE_Share of seats in parliament held by men",
       "unit": "%",
-      "description": NaN
+      "description": null
     },
     {
       "metric_id": 91,
       "acronym": "WISE_UNDP-HDI-GII-PR-F",
       "full_name": "WISE_Share of seats in parliament held by women",
       "unit": "%",
-      "description": NaN
+      "description": null
     },
     {
       "metric_id": 41,
@@ -719,7 +719,7 @@
       "acronym": "WISE_UNDP-HDI-GII-ABR",
       "full_name": "WISE_Adolescent birth rate",
       "unit": "Births Per 1,000 Women Ages 15\u201319",
-      "description": NaN
+      "description": null
     },
     {
       "metric_id": 240,
@@ -761,7 +761,7 @@
       "acronym": "WISE_UNDP-HDI-LE",
       "full_name": "WISE_Life expectancy at birth",
       "unit": "Years",
-      "description": NaN
+      "description": null
     },
     {
       "metric_id": 17,
@@ -775,14 +775,14 @@
       "acronym": "WISE_UNDP-HDI-GDI-LE-F",
       "full_name": "WISE_Life expectancy at birth (Female)",
       "unit": "Years",
-      "description": NaN
+      "description": null
     },
     {
       "metric_id": 83,
       "acronym": "WISE_UNDP-HDI-GDI-LE-M",
       "full_name": "WISE_Life expectancy at birth (Male)",
       "unit": "Years",
-      "description": NaN
+      "description": null
     },
     {
       "metric_id": 7,
@@ -796,7 +796,7 @@
       "acronym": "WISE_UNDP-HDI-GII-MMR",
       "full_name": "WISE_Maternal mortality ratio",
       "unit": "Deaths Per 100,000 Live Births",
-      "description": NaN
+      "description": null
     },
     {
       "metric_id": 214,
@@ -977,84 +977,84 @@
       "acronym": "WISE_WB-CWON-HCA-FEMP-PC",
       "full_name": "WISE_Human capital per capita, employed female",
       "unit": "Constant 2018 USD",
-      "description": NaN
+      "description": null
     },
     {
       "metric_id": 119,
       "acronym": "WISE_WB-CWON-HCA-MEMP-PC",
       "full_name": "WISE_Human capital per capita, employed male",
       "unit": "Constant 2018 USD",
-      "description": NaN
+      "description": null
     },
     {
       "metric_id": 111,
       "acronym": "WISE_WB-CWON-HCA-FEMA-PC",
       "full_name": "WISE_Human capital per capita, female",
       "unit": "Constant 2018 USD",
-      "description": NaN
+      "description": null
     },
     {
       "metric_id": 117,
       "acronym": "WISE_WB-CWON-HCA-MALE-PC",
       "full_name": "WISE_Human capital per capita, male",
       "unit": "Constant 2018 USD",
-      "description": NaN
+      "description": null
     },
     {
       "metric_id": 115,
       "acronym": "WISE_WB-CWON-HCA-FSEM-PC",
       "full_name": "WISE_Human capital per capita, self-employed female",
       "unit": "Constant 2018 USD",
-      "description": NaN
+      "description": null
     },
     {
       "metric_id": 121,
       "acronym": "WISE_WB-CWON-HCA-MSEM-PC",
       "full_name": "WISE_Human capital per capita, self-employed male",
       "unit": "Constant 2018 USD",
-      "description": NaN
+      "description": null
     },
     {
       "metric_id": 114,
       "acronym": "WISE_WB-CWON-HCA-FEMP-TO",
       "full_name": "WISE_Human capital, employed female",
       "unit": "Constant 2018 USD",
-      "description": NaN
+      "description": null
     },
     {
       "metric_id": 120,
       "acronym": "WISE_WB-CWON-HCA-MEMP-TO",
       "full_name": "WISE_Human capital, employed male",
       "unit": "Constant 2018 USD",
-      "description": NaN
+      "description": null
     },
     {
       "metric_id": 112,
       "acronym": "WISE_WB-CWON-HCA-FEMA-TO",
       "full_name": "WISE_Human capital, female",
       "unit": "Constant 2018 USD",
-      "description": NaN
+      "description": null
     },
     {
       "metric_id": 118,
       "acronym": "WISE_WB-CWON-HCA-MALE-TO",
       "full_name": "WISE_Human capital, male",
       "unit": "Constant 2018 USD",
-      "description": NaN
+      "description": null
     },
     {
       "metric_id": 116,
       "acronym": "WISE_WB-CWON-HCA-FSEM-TO",
       "full_name": "WISE_Human capital, self-employed female",
       "unit": "Constant 2018 USD",
-      "description": NaN
+      "description": null
     },
     {
       "metric_id": 122,
       "acronym": "WISE_WB-CWON-HCA-MSEM-TO",
       "full_name": "WISE_Human capital, self-employed male",
       "unit": "Constant 2018 USD",
-      "description": NaN
+      "description": null
     }
   ],
   "Inclusive Society": [
@@ -1109,14 +1109,14 @@
       "acronym": "WISE_UNDP-HDI-GDI-GNI-PC-F",
       "full_name": "WISE_Estimated gross national income per capita (Female)",
       "unit": "2017 PPP $",
-      "description": NaN
+      "description": null
     },
     {
       "metric_id": 79,
       "acronym": "WISE_UNDP-HDI-GDI-GNI-PC-M",
       "full_name": "WISE_Estimated gross national income per capita (Male)",
       "unit": "2017 PPP $",
-      "description": NaN
+      "description": null
     },
     {
       "metric_id": 197,
@@ -1158,7 +1158,7 @@
       "acronym": "WISE_UNDP-HDI-GNIPC",
       "full_name": "WISE_Gross national income (GNI) per capita",
       "unit": "2017 PPP $",
-      "description": NaN
+      "description": null
     },
     {
       "metric_id": 6,
@@ -1381,14 +1381,14 @@
       "acronym": "WISE_UNDP-HDI-GII-LFPR-F",
       "full_name": "WISE_Labour force participation rate (Female)",
       "unit": "% Ages 15 And Older",
-      "description": NaN
+      "description": null
     },
     {
       "metric_id": 89,
       "acronym": "WISE_UNDP-HDI-GII-LFPR-M",
       "full_name": "WISE_Labour force participation rate (Male)",
       "unit": "% Ages 15 And Older",
-      "description": NaN
+      "description": null
     },
     {
       "metric_id": 226,
@@ -1663,210 +1663,210 @@
       "acronym": "WISE_WB-CWON-NCA-AGRI-PC",
       "full_name": "WISE_Natural capital per capita, agricultural land",
       "unit": "Constant 2018 USD",
-      "description": NaN
+      "description": null
     },
     {
       "metric_id": 127,
       "acronym": "WISE_WB-CWON-NCA-CROL-PC",
       "full_name": "WISE_Natural capital per capita, agricultural land: cropland",
       "unit": "Constant 2018 USD",
-      "description": NaN
+      "description": null
     },
     {
       "metric_id": 141,
       "acronym": "WISE_WB-CWON-NCA-PASL-PC",
       "full_name": "WISE_Natural capital per capita, agricultural land: pastureland",
       "unit": "Constant 2018 USD",
-      "description": NaN
+      "description": null
     },
     {
       "metric_id": 131,
       "acronym": "WISE_WB-CWON-NCA-FISH-PC",
       "full_name": "WISE_Natural capital per capita, fisheries",
       "unit": "Constant 2018 USD",
-      "description": NaN
+      "description": null
     },
     {
       "metric_id": 129,
       "acronym": "WISE_WB-CWON-NCA-FECO-PC",
       "full_name": "WISE_Natural capital per capita, forests: ecosystem services",
       "unit": "Constant 2018 USD",
-      "description": NaN
+      "description": null
     },
     {
       "metric_id": 135,
       "acronym": "WISE_WB-CWON-NCA-FTIM-PC",
       "full_name": "WISE_Natural capital per capita, forests: timber",
       "unit": "Constant 2018 USD",
-      "description": NaN
+      "description": null
     },
     {
       "metric_id": 133,
       "acronym": "WISE_WB-CWON-NCA-FOSL-PC",
       "full_name": "WISE_Natural capital per capita, fossil fuels",
       "unit": "Constant 2018 USD",
-      "description": NaN
+      "description": null
     },
     {
       "metric_id": 137,
       "acronym": "WISE_WB-CWON-NCA-MANG-PC",
       "full_name": "WISE_Natural capital per capita, mangroves",
       "unit": "Constant 2018 USD",
-      "description": NaN
+      "description": null
     },
     {
       "metric_id": 144,
       "acronym": "WISE_WB-CWON-NCA-PRAR-PC",
       "full_name": "WISE_Natural capital per capita, protected areas",
       "unit": "Constant 2018 USD",
-      "description": NaN
+      "description": null
     },
     {
       "metric_id": 146,
       "acronym": "WISE_WB-CWON-NCA-RNEW-PC",
       "full_name": "WISE_Natural capital per capita, renewable",
       "unit": "Constant 2018 USD",
-      "description": NaN
+      "description": null
     },
     {
       "metric_id": 154,
       "acronym": "WISE_WB-CWON-NCA-SSOI-PC",
       "full_name": "WISE_Natural capital per capita, subsoil assets",
       "unit": "Constant 2018 USD",
-      "description": NaN
+      "description": null
     },
     {
       "metric_id": 148,
       "acronym": "WISE_WB-CWON-NCA-SACO-PC",
       "full_name": "WISE_Natural capital per capita, subsoil assets: coal",
       "unit": "Constant 2018 USD",
-      "description": NaN
+      "description": null
     },
     {
       "metric_id": 150,
       "acronym": "WISE_WB-CWON-NCA-SAGA-PC",
       "full_name": "WISE_Natural capital per capita, subsoil assets: gas",
       "unit": "Constant 2018 USD",
-      "description": NaN
+      "description": null
     },
     {
       "metric_id": 139,
       "acronym": "WISE_WB-CWON-NCA-MINR-PC",
       "full_name": "WISE_Natural capital per capita, subsoil assets: minerals",
       "unit": "Constant 2018 USD",
-      "description": NaN
+      "description": null
     },
     {
       "metric_id": 152,
       "acronym": "WISE_WB-CWON-NCA-SAOI-PC",
       "full_name": "WISE_Natural capital per capita, subsoil assets: oil",
       "unit": "Constant 2018 USD",
-      "description": NaN
+      "description": null
     },
     {
       "metric_id": 126,
       "acronym": "WISE_WB-CWON-NCA-AGRI-TO",
       "full_name": "WISE_Natural capital, agricultural land",
       "unit": "Constant 2018 USD",
-      "description": NaN
+      "description": null
     },
     {
       "metric_id": 128,
       "acronym": "WISE_WB-CWON-NCA-CROL-TO",
       "full_name": "WISE_Natural capital, agricultural land: cropland",
       "unit": "Constant 2018 USD",
-      "description": NaN
+      "description": null
     },
     {
       "metric_id": 142,
       "acronym": "WISE_WB-CWON-NCA-PASL-TO",
       "full_name": "WISE_Natural capital, agricultural land: pastureland",
       "unit": "Constant 2018 USD",
-      "description": NaN
+      "description": null
     },
     {
       "metric_id": 132,
       "acronym": "WISE_WB-CWON-NCA-FISH-TO",
       "full_name": "WISE_Natural capital, fisheries",
       "unit": "Constant 2018 USD",
-      "description": NaN
+      "description": null
     },
     {
       "metric_id": 130,
       "acronym": "WISE_WB-CWON-NCA-FECO-TO",
       "full_name": "WISE_Natural capital, forests: ecosystem services",
       "unit": "Constant 2018 USD",
-      "description": NaN
+      "description": null
     },
     {
       "metric_id": 136,
       "acronym": "WISE_WB-CWON-NCA-FTIM-TO",
       "full_name": "WISE_Natural capital, forests: timber",
       "unit": "Constant 2018 USD",
-      "description": NaN
+      "description": null
     },
     {
       "metric_id": 134,
       "acronym": "WISE_WB-CWON-NCA-FOSL-TO",
       "full_name": "WISE_Natural capital, fossil fuels",
       "unit": "Constant 2018 USD",
-      "description": NaN
+      "description": null
     },
     {
       "metric_id": 138,
       "acronym": "WISE_WB-CWON-NCA-MANG-TO",
       "full_name": "WISE_Natural capital, mangroves",
       "unit": "Constant 2018 USD",
-      "description": NaN
+      "description": null
     },
     {
       "metric_id": 145,
       "acronym": "WISE_WB-CWON-NCA-PRAR-TO",
       "full_name": "WISE_Natural capital, protected areas",
       "unit": "Constant 2018 USD",
-      "description": NaN
+      "description": null
     },
     {
       "metric_id": 147,
       "acronym": "WISE_WB-CWON-NCA-RNEW-TO",
       "full_name": "WISE_Natural capital, renewable",
       "unit": "Constant 2018 USD",
-      "description": NaN
+      "description": null
     },
     {
       "metric_id": 155,
       "acronym": "WISE_WB-CWON-NCA-SSOI-TO",
       "full_name": "WISE_Natural capital, subsoil assets",
       "unit": "Constant 2018 USD",
-      "description": NaN
+      "description": null
     },
     {
       "metric_id": 149,
       "acronym": "WISE_WB-CWON-NCA-SACO-TO",
       "full_name": "WISE_Natural capital, subsoil assets: coal",
       "unit": "Constant 2018 USD",
-      "description": NaN
+      "description": null
     },
     {
       "metric_id": 151,
       "acronym": "WISE_WB-CWON-NCA-SAGA-TO",
       "full_name": "WISE_Natural capital, subsoil assets: gas",
       "unit": "Constant 2018 USD",
-      "description": NaN
+      "description": null
     },
     {
       "metric_id": 140,
       "acronym": "WISE_WB-CWON-NCA-MINR-TO",
       "full_name": "WISE_Natural capital, subsoil assets: minerals",
       "unit": "Constant 2018 USD",
-      "description": NaN
+      "description": null
     },
     {
       "metric_id": 153,
       "acronym": "WISE_WB-CWON-NCA-SAOI-TO",
       "full_name": "WISE_Natural capital, subsoil assets: oil",
       "unit": "Constant 2018 USD",
-      "description": NaN
+      "description": null
     },
     {
       "metric_id": 160,
@@ -1903,7 +1903,7 @@
       "acronym": "WISE_UNDP-HDI-POP-TOTAL",
       "full_name": "WISE_Population, total",
       "unit": "Millions",
-      "description": NaN
+      "description": null
     }
   ],
   "Rights and Voice": [
@@ -2144,14 +2144,14 @@
       "acronym": "WISE_UNDP-HDI-GDI-HDI-F",
       "full_name": "WISE_Human Development Index (Female)",
       "unit": "Index (0-1)",
-      "description": NaN
+      "description": null
     },
     {
       "metric_id": 81,
       "acronym": "WISE_UNDP-HDI-GDI-HDI-M",
       "full_name": "WISE_Human Development Index (Male)",
       "unit": "Index (0-1)",
-      "description": NaN
+      "description": null
     },
     {
       "metric_id": 96,
@@ -2179,14 +2179,14 @@
       "acronym": "WISE_WB-CWON-TOW-TO",
       "full_name": "WISE_Total wealth",
       "unit": "Constant 2018 USD",
-      "description": NaN
+      "description": null
     },
     {
       "metric_id": 161,
       "acronym": "WISE_WB-CWON-TOW-PC",
       "full_name": "WISE_Total wealth per capita",
       "unit": "Constant 2018 USD",
-      "description": NaN
+      "description": null
     }
   ],
   "Water": [
