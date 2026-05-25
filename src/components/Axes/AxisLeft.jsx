@@ -37,6 +37,7 @@ export const AxisLeft = ({
       <line
         x1={0} x2={0} y1={range[0]} y2={range[1]-5}
         stroke="currentColor" fill="none" opacity={0.3}
+        style={{ pointerEvents: 'none' }}
       />
       {yScale.ticks(numberOfTicksTarget).map((value) => (
         <g key={value} transform={`translate(0, ${yScale(value)})`}>

@@ -65,6 +65,7 @@ export const AxisBottom = ({
       <line
         x1={range[0]} y1={0} x2={range[1]} y2={0}
         stroke="currentColor" fill="none"
+        style={{ pointerEvents: 'none' }}
       />
       {ticks.map((value) => (
         <g key={value} transform={`translate(${xScale(value)}, 0)`}>

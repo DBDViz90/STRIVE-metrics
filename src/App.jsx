@@ -135,7 +135,7 @@ export default function App() {
         }}>
             {/* Header */}
             <header className="bg-white shadow-sm border-b">
-                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div className="w-[60vw] mx-auto px-4 sm:px-6 lg:px-8"> 
                     <div className="flex justify-between items-center h-16">
                         <div className="flex items-center">
                             <h1 className="text-xl font-bold text-gray-900">PA_UNIL STRIVE metric tool</h1>
@@ -149,7 +149,7 @@ export default function App() {
             </header>
 
             {/* Chart Type Toggle */}
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-2">
+            <div className="w-[60vw] mx-auto px-4 sm:px-6 lg:px-8 py-2"> 
                 <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-2 flex gap-2">
                     <button
                         onClick={() => setChartType('scatter')}
@@ -175,9 +175,9 @@ export default function App() {
             </div>
 
             {/* Main Content */}
-            <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+            <main className="w-[60vw] mx-auto px-4 sm:px-6 lg:px-8 py-0"> 
                 {/* Chart */}
-                <div className="bg-white rounded-lg shadow-sm border border-gray-200 max-w-7xl mx-auto">
+                <div className="bg-white rounded-lg shadow-sm border border-gray-200 -mr-18" >
                     {chartType === 'scatter' ? (
                         <ResponsiveScatterplotWithRegression
                             data={metricsData.data}
@@ -205,7 +205,6 @@ export default function App() {
                             xAxisLabel="GDP per capita ($USD)"
                             yAxisLabel="Metric Value"
                             title="Swiss Metrics Explorer"
-                            style={{ minHeight: '600px' }}
                         />
                     ) : (
                         <ResponsiveLineChartWithMetrics
@@ -231,7 +230,6 @@ export default function App() {
                             xAxisLabel="Year"
                             yAxisLabel="Metric Value"
                             title="Swiss Metrics Explorer"
-                            style={{ minHeight: '600px' }}
                         />
                     )}
                 </div>

@@ -138,9 +138,6 @@ export const ScatterplotWithRegression = ({
     metadata = [],
     selectedMetric,
     onSelectMetric,
-    xDomain: externalXDomain,
-    onXDomainChange,
-    gdpRange,
     searchQuery = '',
     onSearchChange,
     sortBy = 'alphabetical',
@@ -154,14 +151,19 @@ export const ScatterplotWithRegression = ({
     paneWidth: externalPaneWidth,
     onPaneWidthChange,
     onSwitchToLineChart,
+    xDomain: externalXDomain,
+    onXDomainChange: externalOnXDomainChange,
+    gdpRange: externalGdpRange,
     width = 800,
     ...props
 }) => {
+    // Controlled xDomain from props
+    const setXDomain = externalOnXDomainChange !== undefined ? externalOnXDomainChange : (() => {});
     // Constants
-    const MARGIN = { top: 105, right: 30, bottom: 80, left: 110 };
+    const MARGIN = { top: 80, right: 30, bottom: 70, left: 110 };
     const GAP = 16;
     const PANE_WIDTH = 200;
-    const MOBILE_BREAKPOINT = 768;
+    const MOBILE_BREAKPOINT = 600;
     const MIN_PANE_WIDTH = 150;
     const MAX_PANE_WIDTH = 400;
     
@@ -197,18 +199,22 @@ export const ScatterplotWithRegression = ({
     const totalHorizontalMargin = MARGIN.left + MARGIN.right;
     const totalVerticalMargin = MARGIN.top + MARGIN.bottom;
     const marginDifference = totalVerticalMargin - totalHorizontalMargin;
-    const scale = 0.8; // Height scaling factor
+    // const scale = 0.9; // Height scaling factor
+    // const scale = width < 700 ? 1.2 : 0.8;
+    const scale = window.innerWidth < 1300 ? 0.85 : 0.8;
     const chartWidth = availableWidth * scale;
     const chartHeight = chartWidth + marginDifference;
     const boundsWidth = chartWidth - totalHorizontalMargin;
     const boundsHeight = chartHeight - totalVerticalMargin;
     const chartContainerHeight = isMobileLayout ? chartHeight + 100 : chartHeight;
-    
+    //const textOffset = chartHeight * 0.12; // Relative positioning for text
+    const textOffset = Math.min(40, chartHeight * 0.12);
+
     // Font sizes based on width
-    const titleFontSize = Math.max(14, width * 0.028);
+    const titleFontSize = Math.max(14, width * 0.022);
     const axisLabelFontSize = Math.max(10, width * 0.015);
-    const tickFontSize = Math.max(8, width * 0.016);
-    const itemFontSize = Math.max(11, width * 0.016);
+    const tickFontSize = Math.max(8, width * 0.015);
+    const itemFontSize = Math.max(11, width * 0.015);
     
     // GDP key based on predictor type
     const gdpKey = selectedPredictorType === 'CHF_LCU' ? 'gdp_lcu' : 'gdp_usd';
@@ -218,8 +224,17 @@ export const ScatterplotWithRegression = ({
         ? 'GDP per capita (CHF, constant LCU)' 
         : 'GDP per capita (current $USD)';
     
-    // X and Y domains (controlled by externalXDomain from App.jsx)
-    const xDomain = externalXDomain || (gdpRange ? [gdpRange[0], gdpRange[1]] : [0, 100]);
+    // Scatter data for selected metric
+    const scatterData = useMemo(() => {
+        if (!selectedMetric) return [];
+        return data
+            .filter(d => d[selectedMetric] !== null && d[selectedMetric] !== undefined && d[gdpKey] !== null && d[gdpKey] !== undefined)
+            .map(d => ({
+                x: d[gdpKey],
+                y: d[selectedMetric],
+                year: d.year
+            }));
+    }, [selectedMetric, data, gdpKey]);
     
     // Regression result for selected metric
     const regressionForMetric = useMemo(() => {
@@ -227,17 +242,19 @@ export const ScatterplotWithRegression = ({
         return regressionResults.find(r => r.target_metric === selectedMetric && r.predictor_type === selectedPredictorType);
     }, [selectedMetric, regressionResults, selectedPredictorType]);
     
-    // Scatter data for selected metric, filtered by xDomain
-    const scatterData = useMemo(() => {
-        if (!selectedMetric || !xDomain) return [];
-        return data
-            .filter(d => d[selectedMetric] !== null && d[selectedMetric] !== undefined && d[gdpKey] !== null && d[gdpKey] !== undefined && d[gdpKey] >= xDomain[0] && d[gdpKey] <= xDomain[1])
-            .map(d => ({
-                x: d[gdpKey],
-                y: d[selectedMetric],
-                year: d.year
-            }));
-    }, [selectedMetric, data, gdpKey, xDomain]);
+    // X and Y domains
+    const defaultXDomain = useMemo(() => {
+        if (scatterData.length === 0) {
+            const gdpValues = data.map(d => d[gdpKey]).filter(v => v !== null && v !== undefined);
+            if (gdpValues.length === 0) return [0, 100];
+            return d3.extent(gdpValues);
+        }
+        const xValues = scatterData.map(d => d.x);
+        return d3.extent(xValues);
+    }, [scatterData, data, gdpKey]);
+    
+    // Use controlled xDomain from props, fallback to calculation
+    const effectiveXDomain = externalXDomain !== undefined ? externalXDomain : defaultXDomain;
     
     const yDomain = useMemo(() => {
         if (scatterData.length === 0) return [0, 1];
@@ -260,17 +277,17 @@ export const ScatterplotWithRegression = ({
         return generateRegressionPoints(
             regressionForMetric.best_model,
             regressionForMetric,
-            xDomain,
+            effectiveXDomain,
             100
         );
-    }, [regressionForMetric, xDomain]);
+    }, [regressionForMetric, effectiveXDomain]);
     
     // D3 scales
     const xScale = useMemo(() => {
         return d3.scaleLinear()
-            .domain([xDomain[0], xDomain[1]])
+            .domain([effectiveXDomain[0], effectiveXDomain[1]])
             .range([0, boundsWidth]);
-    }, [xDomain, boundsWidth]);
+    }, [effectiveXDomain, boundsWidth]);
     
     const yScale = useMemo(() => {
         return d3.scaleLinear()
@@ -536,7 +553,7 @@ export const ScatterplotWithRegression = ({
     }, [filteredSeriesKeys, selectedMetric, handleSelectMetric]);
 
     return (
-        <div ref={containerRef} className="flex flex-col md:flex-row relative" style={{ width, fontFamily: FONT_FAMILY }}>
+        <div ref={containerRef} className="flex flex-col md:flex-row relative" style={{ width, height: chartContainerHeight, fontFamily: FONT_FAMILY }}>
             {/* Chart Area */}
             <div className="relative mr-8" style={{ width: chartWidth, height: chartContainerHeight }}>
                 <svg
@@ -544,78 +561,77 @@ export const ScatterplotWithRegression = ({
                     height={chartHeight}
                     style={{ display: 'block' }}
                 >
-                    {/* Title */}
-                    {selectedMetric && (
-                        <text
-                            x={chartWidth / 2}
-                            y={MARGIN.top - 70}
-                            fontSize={titleFontSize}
-                            textAnchor="middle"
-                            fill="#333"
-                            fontWeight="bold"
-                        >
-                            {(() => {
-                                const name = formatMetricName(selectedMetric);
-                                const gdpKey = selectedPredictorType === 'CHF_LCU' ? 'gdp_lcu' : 'gdp_usd';
-                                const metricData = data.filter(d => d[selectedMetric] !== null && d[gdpKey] !== null);
-                                const years = metricData.map(d => d.year);
-                                const yearRange = years.length > 0 ? `${Math.min(...years)}-${Math.max(...years)}` : '';
-                                const displayName = yearRange ? `${name} - ${yearRange}` : name;
-                                
-                                if (displayName.length > 30) {
-                                    const words = displayName.split(' ');
-                                    const mid = Math.ceil(words.length / 2);
-                                    return (
-                                        <>
-                                            <tspan x={chartWidth / 2} dy={0}>{words.slice(0, mid).join(' ')}</tspan>
-                                            <tspan x={chartWidth / 2} dy={titleFontSize + 4}>{words.slice(mid).join(' ')}</tspan>
-                                        </>
-                                    );
-                                }
-                                return displayName;
-                            })()}
-                        </text>
-                    )}
-                    
-                    {/* Regression info */}
-                    {regressionForMetric && selectedMetric && (
-                        <text
-                            x={chartWidth / 2}
-                            y={MARGIN.top - 20}
-                            fontSize={Math.max(12, width * 0.02)}
-                            textAnchor="middle"
-                            fill="#666"
-                        >
-                            Best fit:{' '}
-                            {regressionForMetric.best_model === 'other' ? (
-                                <tspan style={{ textDecoration: 'underline' }}>
-                                    undefined (Best fit R² = {getR2Value(regressionForMetric)?.toFixed(3)})
-                                </tspan>
-                            ) : (
-                                <>
-                                    <tspan style={{ textDecoration: 'underline' }}>{regressionForMetric.best_model}</tspan>
-                                    {getR2Value(regressionForMetric) && ` (R² = ${getR2Value(regressionForMetric).toFixed(3)})`}
-                                </>
-                            )}
-                        </text>
-                    )}
-                    
-                    {regressionForMetric === null && selectedMetric && (
-                        <text x={chartWidth / 2} y={MARGIN.top - 16} fontSize={Math.max(12, width * 0.015)} textAnchor="middle" fill="#999">
-                            No regression data available
-                        </text>
-                    )}
-                    
-                    {/* No data message */}
-                    {selectedMetric && scatterData.length === 0 && (
-                        <text x={chartWidth / 2} y={chartHeight / 2} fontSize={titleFontSize * 2} textAnchor="middle" fill="#999">
-                            No data matching with
-                            <tspan x={chartWidth / 2} dy={titleFontSize * 1.2}>GDP year range</tspan>
-                        </text>
-                    )}
-                    
                     {/* Chart Group - translated to account for margins */}
                     <g transform={`translate(${[MARGIN.left, MARGIN.top].join(",")})`}>
+                        {/* Title */}
+                        {selectedMetric && (
+                            <text
+                                x={0}
+                                y={-MARGIN.top/1.5}
+                                fontSize={titleFontSize}
+                                textAnchor="middle"
+                                fill="#333"
+                                fontWeight="bold"
+                            >
+                                {(() => {
+                                    const name = formatMetricName(selectedMetric);
+                                    const gdpKey = selectedPredictorType === 'CHF_LCU' ? 'gdp_lcu' : 'gdp_usd';
+                                    const metricData = data.filter(d => d[selectedMetric] !== null && d[gdpKey] !== null);
+                                    const years = metricData.map(d => d.year);
+                                    const yearRange = years.length > 0 ? `${Math.min(...years)}-${Math.max(...years)}` : '';
+                                    const displayName = yearRange ? `${name} - ${yearRange}` : name;
+                                    
+                                    if (displayName.length > 30) {
+                                        const words = displayName.split(' ');
+                                        const mid = Math.ceil(words.length / 2);
+                                        return (
+                                            <>
+                                                <tspan x={chartWidth/3} dy={0}>{words.slice(0, mid).join(' ')}</tspan>
+                                                <tspan x={chartWidth/3} dy={titleFontSize + 4}>{words.slice(mid).join(' ')}</tspan>
+                                            </>
+                                        );
+                                    }
+                                    return displayName;
+                                })()}
+                            </text>
+                        )}
+                        
+                        {/* Regression info */}
+                        {regressionForMetric && selectedMetric && (
+                            <text
+                                x={chartWidth / 3}
+                                y={titleFontSize*0.1}
+                                fontSize={Math.max(12, width * 0.018)}
+                                textAnchor="middle"
+                                fill="#666"
+                            >
+                                Best fit:{' '}
+                                {regressionForMetric.best_model === 'other' ? (
+                                    <tspan style={{ textDecoration: 'underline' }}>
+                                        undefined (Best fit R² = {getR2Value(regressionForMetric)?.toFixed(3)})
+                                    </tspan>
+                                ) : (
+                                    <>
+                                        <tspan style={{ textDecoration: 'underline' }}>{regressionForMetric.best_model}</tspan>
+                                        {getR2Value(regressionForMetric) && ` (R² = ${getR2Value(regressionForMetric).toFixed(3)})`}
+                                    </>
+                                )}
+                            </text>
+                        )}
+                        
+                        {regressionForMetric === null && selectedMetric && (
+                            <text x={chartWidth / 2} y={chartHeight / 2} fontSize={Math.max(12, width * 0.015)} textAnchor="middle" fill="#999">
+                                No regression data available
+                            </text>
+                        )}
+                        
+                        {/* No data message */}
+                        {selectedMetric && scatterData.length === 0 && (
+                            <text x={chartWidth / 2} y={chartHeight / 2} fontSize={titleFontSize * 2} textAnchor="middle" fill="#999">
+                                No data matching with
+                                <tspan x={chartWidth / 2} dy={titleFontSize * 1.2}>GDP year range</tspan>
+                            </text>
+                        )}
                         {/* Regression line */}
                         {regressionPoints.length > 0 && regressionForMetric && regressionForMetric.best_model !== 'other' && (
                             <path
@@ -640,7 +656,7 @@ export const ScatterplotWithRegression = ({
                                     key={i}
                                     cx={xScale(point.x)}
                                     cy={yScale(point.y)}
-                                    r={5*scale}
+                                    r={Math.max(3, width * 0.005)}
                                     fill="black"
                                     fillOpacity={opacity}
                                     stroke="white"
