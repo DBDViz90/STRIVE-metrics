@@ -224,17 +224,24 @@ export const ScatterplotWithRegression = ({
         ? 'GDP per capita (CHF, constant LCU)' 
         : 'GDP per capita (current $USD)';
     
-    // Scatter data for selected metric
+    // Scatter data for selected metric - filtered by x-domain when slider is active
     const scatterData = useMemo(() => {
         if (!selectedMetric) return [];
         return data
-            .filter(d => d[selectedMetric] !== null && d[selectedMetric] !== undefined && d[gdpKey] !== null && d[gdpKey] !== undefined)
+            .filter(d => {
+                const xVal = d[gdpKey];
+                const yVal = d[selectedMetric];
+                const hasValidXY = xVal !== null && xVal !== undefined && yVal !== null && yVal !== undefined;
+                const inXRange = externalXDomain === undefined 
+                    || (xVal >= externalXDomain[0] && xVal <= externalXDomain[1]);
+                return hasValidXY && inXRange;
+            })
             .map(d => ({
                 x: d[gdpKey],
                 y: d[selectedMetric],
                 year: d.year
             }));
-    }, [selectedMetric, data, gdpKey]);
+    }, [selectedMetric, data, gdpKey, externalXDomain]);
     
     // Regression result for selected metric
     const regressionForMetric = useMemo(() => {
@@ -318,7 +325,7 @@ export const ScatterplotWithRegression = ({
         return value.toFixed(4);
     };
     
-    // Create mapping from metric name to category
+    // Create mapping from metric name to category and unit from metadata
     const metricToCategory = useMemo(() => {
         const map = {};
         metadata.forEach(m => {
@@ -326,6 +333,22 @@ export const ScatterplotWithRegression = ({
         });
         return map;
     }, [metadata]);
+
+    const metricToUnit = useMemo(() => {
+        const map = {};
+        metadata.forEach(m => {
+            map[m.full_name] = m.unit;
+        });
+        return map;
+    }, [metadata]);
+
+    // Get unit for y-axis label based on selected metric
+    const effectiveYAxisLabel = useMemo(() => {
+        if (selectedMetric && metricToUnit[selectedMetric]) {
+            return metricToUnit[selectedMetric];
+        }
+        return "Metric Value";
+    }, [selectedMetric, metricToUnit]);
     
     // Get all unique categories from metadata
     const allCategories = useMemo(() => {
@@ -575,9 +598,7 @@ export const ScatterplotWithRegression = ({
                             >
                                 {(() => {
                                     const name = formatMetricName(selectedMetric);
-                                    const gdpKey = selectedPredictorType === 'CHF_LCU' ? 'gdp_lcu' : 'gdp_usd';
-                                    const metricData = data.filter(d => d[selectedMetric] !== null && d[gdpKey] !== null);
-                                    const years = metricData.map(d => d.year);
+                                    const years = scatterData.map(d => d.year);
                                     const yearRange = years.length > 0 ? `${Math.min(...years)}-${Math.max(...years)}` : '';
                                     const displayName = yearRange ? `${name} - ${yearRange}` : name;
                                     
@@ -607,9 +628,10 @@ export const ScatterplotWithRegression = ({
                             >
                                 Best fit:{' '}
                                 {regressionForMetric.best_model === 'other' ? (
-                                    <tspan style={{ textDecoration: 'underline' }}>
-                                        undefined (Best fit R² = {getR2Value(regressionForMetric)?.toFixed(3)})
-                                    </tspan>
+                                    <>
+                                        <tspan style={{ textDecoration: 'underline' }}>undefined</tspan>
+                                        {getR2Value(regressionForMetric) && ` (Best fit R² = ${getR2Value(regressionForMetric)?.toFixed(3)})`}
+                                    </>
                                 ) : (
                                     <>
                                         <tspan style={{ textDecoration: 'underline' }}>{regressionForMetric.best_model}</tspan>
@@ -627,9 +649,9 @@ export const ScatterplotWithRegression = ({
                         
                         {/* No data message */}
                         {selectedMetric && scatterData.length === 0 && (
-                            <text x={chartWidth / 2} y={chartHeight / 2} fontSize={titleFontSize * 2} textAnchor="middle" fill="#999">
+                            <text x={chartWidth / 2.5} y={chartHeight/3} fontSize={titleFontSize * 2} textAnchor="middle" fill="#999">
                                 No data matching with
-                                <tspan x={chartWidth / 2} dy={titleFontSize * 1.2}>GDP year range</tspan>
+                                <tspan x={chartWidth / 2.5} dy={titleFontSize * 1.8}>GDP year range</tspan>
                             </text>
                         )}
                         {/* Regression line */}
@@ -827,7 +849,7 @@ export const ScatterplotWithRegression = ({
                             yScale={yScale} 
                             pixelsPerTick={60} 
                             boundsWidth={boundsWidth} 
-                            label="Metric Value"
+                            label={effectiveYAxisLabel}
                             tickFormat={formatValue}
                             labelFontSize={axisLabelFontSize}
                             tickFontSize={tickFontSize}

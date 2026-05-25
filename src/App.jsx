@@ -203,7 +203,6 @@ export default function App() {
                             onXDomainChange={setXDomain}
                             gdpRange={gdpRange}
                             xAxisLabel="GDP per capita ($USD)"
-                            yAxisLabel="Metric Value"
                             title="Swiss Metrics Explorer"
                         />
                     ) : (
