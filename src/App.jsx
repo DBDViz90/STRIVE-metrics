@@ -43,6 +43,22 @@ export default function App() {
         return [minX || 0, maxX || 100];
     }, [metricsData.data, selectedPredictorType]);
 
+    // Auto-update xDomain when metric or predictor changes
+    useEffect(() => {
+        if (selectedMetric) {
+            const gdpKey = selectedPredictorType === 'CHF_LCU' ? 'gdp_lcu' : 'gdp_usd';
+            const metricData = metricsData.data.filter(d => d[selectedMetric] !== null && d[selectedMetric] !== undefined);
+            const metricX = metricData.map(d => d[gdpKey]).filter(x => x != null);
+            if (metricX.length > 0) {
+                setXDomain(d3.extent(metricX));
+            } else {
+                setXDomain(gdpRange);
+            }
+        } else {
+            setXDomain(gdpRange);
+        }
+    }, [selectedMetric, metricsData.data, gdpRange, selectedPredictorType]);
+
     // Load all data on mount
     useEffect(() => {
         async function loadAllData() {
@@ -159,9 +175,9 @@ export default function App() {
             </div>
 
             {/* Main Content */}
-            <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+            <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
                 {/* Chart */}
-                <div className="bg-white rounded-lg shadow-sm border border-gray-200">
+                <div className="bg-white rounded-lg shadow-sm border border-gray-200 max-w-7xl mx-auto">
                     {chartType === 'scatter' ? (
                         <ResponsiveScatterplotWithRegression
                             data={metricsData.data}
