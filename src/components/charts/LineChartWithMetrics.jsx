@@ -210,7 +210,7 @@ export const LineChartWithMetrics = ({
     
     // Font sizes based on width (match scatter plot)
     const titleFontSize = Math.max(14, width * 0.022);
-    const axisLabelFontSize = Math.max(10, width * 0.015);
+    const axisLabelFontSize = Math.max(10, width * 0.017);
     const tickFontSize = Math.max(8, width * 0.015);
     const itemFontSize = Math.max(11, width * 0.015);
     

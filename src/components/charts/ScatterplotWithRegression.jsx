@@ -212,7 +212,7 @@ export const ScatterplotWithRegression = ({
 
     // Font sizes based on width
     const titleFontSize = Math.max(14, width * 0.022);
-    const axisLabelFontSize = Math.max(10, width * 0.015);
+    const axisLabelFontSize = Math.max(10, width * 0.017);
     const tickFontSize = Math.max(8, width * 0.015);
     const itemFontSize = Math.max(11, width * 0.015);
     
@@ -443,7 +443,7 @@ export const ScatterplotWithRegression = ({
             const matchesSearch = key.toLowerCase().includes(searchQuery.toLowerCase());
             const category = metricToCategory[key];
             const matchesCategory = selectedCategories.length === 0 || (category && selectedCategories.includes(category));
-            const matchesModel = selectedModelTypes.length === 0 || matchesModelFilter(key);
+            const matchesModel = selectedModelTypes.length > 0 && matchesModelFilter(key);
             return !isGDP && matchesSearch && matchesCategory && matchesModel;
         });
         
