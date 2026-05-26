@@ -108,6 +108,8 @@ function getR2Value(regression) {
  * @param {string} [props.xAxisLabel='Year'] - Label for x-axis
  * @param {string} [props.yAxisLabel='Metric Value'] - Label for y-axis
  * @param {string} [props.title=''] - Chart title
+ * @param {number[]} [props.yearDomain] - Year range for line chart slider (controlled)
+ * @param {Function} [props.setYearDomain] - Callback to update year domain
  */
 export const LineChartWithMetrics = ({
     data,
@@ -132,6 +134,8 @@ export const LineChartWithMetrics = ({
     xAxisLabel = 'Year',
     yAxisLabel = 'Metric Value',
     title = '',
+    yearDomain: externalYearDomain,
+    setYearDomain: externalSetYearDomain,
     width = 800,
     height = 500,
 }) => {
@@ -159,8 +163,11 @@ export const LineChartWithMetrics = ({
     const paneWidth = externalPaneWidth !== undefined ? externalPaneWidth : internalPaneWidth;
     const setPaneWidth = externalOnPaneWidthChange !== undefined ? externalOnPaneWidthChange : setInternalPaneWidth;
     
+    // Use controlled yearDomain from props, fallback to internal state
+    const yearDomain = externalYearDomain !== undefined ? externalYearDomain : null;
+    const setYearDomain = externalSetYearDomain !== undefined ? externalSetYearDomain : (() => {});
+    
     // Local state (not shared)
-    const [yearDomain, setYearDomain] = useState(null);
     const [isResizing, setIsResizing] = useState(false);
     const [showCategoryDropdown, setShowCategoryDropdown] = useState(false);
     const [showModelDropdown, setShowModelDropdown] = useState(false);
@@ -171,8 +178,8 @@ export const LineChartWithMetrics = ({
     const MIN_PANE_WIDTH = 150;
     const MAX_PANE_WIDTH = 400;
     const GAP = 16;
-    const MOBILE_BREAKPOINT = 768;
-    const MARGIN = { top: 105, right: 30, bottom: 80, left: 110 };
+    const MOBILE_BREAKPOINT = 608;
+    const MARGIN = { top: 80, right: 30, bottom: 70, left: 110 };
     const containerRef = useRef(null);
     const metricListRef = useRef(null);
     
@@ -188,16 +195,24 @@ export const LineChartWithMetrics = ({
     const isMobileLayout = width < MOBILE_BREAKPOINT;
     const effectivePaneWidth = isMobileLayout ? 0 : paneWidth;
     const effectiveGap = isMobileLayout ? 0 : GAP;
-    const chartWidth = width - effectivePaneWidth - effectiveGap;
-    const chartHeight = isMobileLayout ? height - 250 : height;
+    const availableWidth = width - effectivePaneWidth - effectiveGap;
+
+    // Square axis area calculation with height scaling (match scatter plot)
+    const totalHorizontalMargin = MARGIN.left + MARGIN.right;
+    const totalVerticalMargin = MARGIN.top + MARGIN.bottom;
+    const marginDifference = totalVerticalMargin - totalHorizontalMargin;
+    const scale = window.innerWidth < 1300 ? 0.85 : 0.8;
+    const chartWidth = availableWidth * scale;
+    const chartHeight = chartWidth + marginDifference;
+    const boundsWidth = chartWidth - totalHorizontalMargin;
+    const boundsHeight = chartHeight - totalVerticalMargin;
+    const chartContainerHeight = isMobileLayout ? chartHeight + 100 : chartHeight;
     
-    // Font sizes based on width
-    const titleFontSize = Math.max(14, width * 0.02);
+    // Font sizes based on width (match scatter plot)
+    const titleFontSize = Math.max(14, width * 0.022);
     const axisLabelFontSize = Math.max(10, width * 0.015);
-    const tickFontSize = Math.max(8, width * 0.013);
-    const itemFontSize = Math.max(11, width * 0.011);
-    const boundsWidth = chartWidth - MARGIN.left - MARGIN.right;
-    const boundsHeight = chartHeight - MARGIN.top - MARGIN.bottom;
+    const tickFontSize = Math.max(8, width * 0.015);
+    const itemFontSize = Math.max(11, width * 0.015);
     
     // Ref to track resizing state for event handlers (avoids closure issues)
     const isResizingRef = useRef(false);
@@ -395,41 +410,7 @@ export const LineChartWithMetrics = ({
         return [minYear || 1960, maxYear || 2024];
     }, [data]);
 
-    // Get year range for a specific metric
-    const getYearRangeForMetric = useCallback((metric) => {
-        if (!metric || data.length === 0) return null;
-        const years = data
-            .map(d => d[metric] !== null && d[metric] !== undefined ? d.year : null)
-            .filter(y => y !== null && y !== undefined);
-        if (years.length === 0) return null;
-        const [minYear, maxYear] = d3.extent(years);
-        return minYear && maxYear ? `${minYear}-${maxYear}` : null;
-    }, [data]);
-
-    // Initialize yearDomain
-    useEffect(() => {
-        if (yearDomain === null && yearRange[0] !== 1960 && yearRange[1] !== 2024) {
-            setYearDomain(yearRange);
-        }
-    }, [yearRange, yearDomain]);
-
-    // Update yearDomain when metric changes
-    useEffect(() => {
-        if (!selectedMetric) {
-            setYearDomain(yearRange);
-        } else {
-            // Use the data's year range for this metric
-            const metricYears = data
-                .filter(d => d[selectedMetric] !== null && d[selectedMetric] !== undefined && d.year !== null && d.year !== undefined)
-                .map(d => d.year);
-            if (metricYears.length > 0) {
-                const [minYear, maxYear] = d3.extent(metricYears);
-                setYearDomain([minYear || yearRange[0], maxYear || yearRange[1]]);
-            }
-        }
-    }, [selectedMetric, data, yearRange]);
-    
-    // Effective yearDomain (controlled by slider)
+    // Effective yearDomain (controlled by slider from App.jsx)
     const effectiveYearDomain = yearDomain || yearRange;
     
     // Filter data based on year-domain
@@ -599,14 +580,14 @@ export const LineChartWithMetrics = ({
     };
 
     return (
-        <div ref={containerRef} className="flex flex-col md:flex-row gap-4 relative" style={{ width, height, fontFamily: FONT_FAMILY }}>
+        <div ref={containerRef} className="flex flex-col md:flex-row relative" style={{ width, height: chartContainerHeight, fontFamily: FONT_FAMILY }}>
             {/* Main Chart Area */}
-            <div className="flex-1 min-w-0" style={{ height: isMobileLayout ? chartHeight + 250 : chartHeight + 60 }}>
-                <div className="relative" style={{ width: chartWidth, height: chartHeight }}>
-                    <svg 
-                        width={chartWidth} 
-                        height={chartHeight}
-                        onMouseMove={(e) => {
+            <div className="relative mr-8" style={{ width: chartWidth, height: chartContainerHeight }}>
+                <svg 
+                    width={chartWidth} 
+                    height={chartHeight}
+                    style={{ display: 'block' }}
+                    onMouseMove={(e) => {
                             if (!voronoiDiagram || lineData.length === 0) {
                                 setHoveredIndex(null);
                                 setHoveredPoint(null);
@@ -647,93 +628,83 @@ export const LineChartWithMetrics = ({
                             setHoveredPoint(null);
                         }}
                     >
-                    {/* Title */}
-                    {title && (
-                        <text
-                            x={chartWidth / 2}
-                            y={MARGIN.top - 70}
-                            fontSize={titleFontSize}
-                            textAnchor="middle"
-                            fill="#333"
-                            fontWeight="bold"
-                            fontFamily={FONT_FAMILY}
-                        >
-                            {selectedMetric ? (
-                                () => {
-                                    const name = formatMetricName(selectedMetric);
-                                    const yearRange = getYearRangeForMetric(selectedMetric);
-                                    const displayName = yearRange ? `${name} - ${yearRange}` : name;
-                                    // Only split if name is long (>40 chars)
-                                    if (displayName.length > 80) {
-                                        const words = displayName.split(' ');
-                                        const mid = Math.ceil(words.length / 2);
-                                        return (
-                                            <>
-                                                <tspan x={chartWidth / 2} dy={0}>{words.slice(0, mid).join(' ')}</tspan>
-                                                <tspan x={chartWidth / 2} dy={titleFontSize + 4}>{words.slice(mid).join(' ')}</tspan>
-                                            </>
-                                        );
-                                    }
-                                    return displayName;
-                                }
-                            )() : title}
-                            {regressionForMetric && selectedMetric && (
-                                <tspan x={chartWidth / 2} dy={30} fontSize={titleFontSize * 0.8} fill="#666">
-                                    Best fit: {regressionForMetric.best_model === 'other' ? `undefined (Best fit R² = ${getR2Value(regressionForMetric)?.toFixed(3)})` : regressionForMetric.best_model}
-                                    {regressionForMetric.best_model !== 'other' && getR2Value(regressionForMetric) && ` (R² = ${getR2Value(regressionForMetric).toFixed(3)})`}
-                                </tspan>
-                            )}
-                            {regressionForMetric === null && selectedMetric && (
-                                <tspan x={chartWidth / 2} dy={16} fontSize={titleFontSize * 0.8} fill="#999">
-                                    No regression data available
-                                </tspan>
-                            )}
-                        </text>
-                    )}
-                    
-                    {/* No data message */}
-                    {selectedMetric && lineData.length === 0 && (() => {
-                        const message = "No data matching with GDP year range";
-                        const fontSize = titleFontSize * 2;
-
-                        if (message.length > 30) {
-                            const words = message.split(' ');
-                            const mid = Math.ceil(words.length / 2);
-                            return (
-                                <text x={chartWidth / 2} y={chartHeight / 2} fontSize={fontSize} textAnchor="middle" fill="#999" fontFamily={FONT_FAMILY}>
-                                    <tspan x={chartWidth / 2} dy={0}>{words.slice(0, mid).join(' ')}</tspan>
-                                    <tspan x={chartWidth / 2} dy={fontSize * 1.2}>{words.slice(mid).join(' ')}</tspan>
-                                </text>
-                            );
-                        }
-                        return (
-                            <text x={chartWidth / 2} y={chartHeight / 2} fontSize={fontSize} textAnchor="middle" fill="#999" fontFamily={FONT_FAMILY}>
-                                {message}
-                            </text>
-                        );
-                    })()}
-                    
-                    {/* Chart Group */}
+                    {/* Chart Group - translated to account for margins */}
                     <g
                         width={boundsWidth}
                         height={boundsHeight}
                         transform={`translate(${[MARGIN.left, MARGIN.top].join(",")})`}
                     >
-                        {/* Grid lines */}
-                        <g className="grid-lines">
-                            {yScale.ticks(5).map((value) => (
-                                <line
-                                    key={value}
-                                    x1={0}
-                                    x2={boundsWidth}
-                                    y1={yScale(value)}
-                                    y2={yScale(value)}
-                                    stroke="#e0e0e0"
-                                    strokeWidth={1}
-                                />
-                            ))}
-                        </g>
+                        {/* Title */}
+                        {selectedMetric && (
+                            <text
+                                x={0}
+                                y={-MARGIN.top/1.5}
+                                fontSize={titleFontSize}
+                                textAnchor="middle"
+                                fill="#333"
+                                fontWeight="bold"
+                            >
+                                {(() => {
+                                    const name = formatMetricName(selectedMetric);
+                                    const years = lineData.map(d => d.year);
+                                    const yearRange = years.length > 0 ? `${Math.min(...years)}-${Math.max(...years)}` : '';
+                                    const displayName = yearRange ? `${name} - ${yearRange}` : name;
+                                    
+                                    if (displayName.length > 30) {
+                                        const words = displayName.split(' ');
+                                        const mid = Math.ceil(words.length / 2);
+                                        return (
+                                            <>
+                                                <tspan x={chartWidth/3} dy={0}>{words.slice(0, mid).join(' ')}</tspan>
+                                                <tspan x={chartWidth/3} dy={titleFontSize + 4}>{words.slice(mid).join(' ')}</tspan>
+                                            </>
+                                        );
+                                    }
+                                    return displayName;
+                                })()}
+                            </text>
+                        )}
+
+                        {/* Regression info */}
+                        {regressionForMetric && selectedMetric && (
+                            <text
+                                x={chartWidth / 3}
+                                y={titleFontSize*0.1}
+                                fontSize={Math.max(12, width * 0.018)}
+                                textAnchor="middle"
+                                fill="#666"
+                            >
+                                Best fit:{' '}
+                                {regressionForMetric.best_model === 'other' ? (
+                                    <>
+                                        <tspan style={{ textDecoration: 'underline' }}>undefined</tspan>
+                                        {getR2Value(regressionForMetric) && ` (Best fit R² = ${getR2Value(regressionForMetric)?.toFixed(3)})`}
+                                    </>
+                                ) : (
+                                    <>
+                                        <tspan style={{ textDecoration: 'underline' }}>{regressionForMetric.best_model}</tspan>
+                                        {getR2Value(regressionForMetric) && ` (R² = ${getR2Value(regressionForMetric).toFixed(3)})`}
+                                    </>
+                                )}
+                            </text>
+                        )}
+
+                        {/* No regression data */}
+                        {regressionForMetric === null && selectedMetric && (
+                            <text x={chartWidth / 2} y={chartHeight / 2} fontSize={Math.max(12, width * 0.015)} textAnchor="middle" fill="#999">
+                                No regression data available
+                            </text>
+                        )}
                         
+                        {/* No data message */}
+                        {selectedMetric && lineData.length === 0 && (
+                            <text x={chartWidth / 2.5} y={chartHeight/3} fontSize={titleFontSize * 2} textAnchor="middle" fill="#999">
+                                No data matching with
+                                <tspan x={chartWidth / 2.5} dy={titleFontSize * 1.8}>year range</tspan>
+                            </text>
+                        )}
+                        
+
                         {/* Line chart */}
                         {lineData.length > 0 && (
                             <path
@@ -801,50 +772,23 @@ export const LineChartWithMetrics = ({
                     <Tooltip interactionData={hoveredPoint} />
                 </div>
 
-                {/* Slider - Year range */}
-                <div className="mt-4 px-2 flex items-center gap-4">
-                    <Slider
-                        value={effectiveYearDomain}
-                        min={yearRange[0]}
-                        max={yearRange[1]}
-                        onChange={setYearDomain}
-                        label="Year range"
-                        unit=""
-                    />
-                    <button
-                        onClick={() => {
-                            if (selectedMetric) {
-                                const metricData = data.filter(d => d[selectedMetric] !== null && d[selectedMetric] !== undefined);
-                                const metricYears = metricData.map(d => d.year).filter(y => y != null);
-                                if (metricYears.length > 0) {
-                                    setYearDomain(d3.extent(metricYears));
-                                    return;
-                                }
-                            }
-                            setYearDomain(yearRange);
-                        }}
-                        className="px-3 py-1 text-xs bg-gray-100 rounded hover:bg-gray-200 transition-colors whitespace-nowrap"
-                        style={{ fontFamily: FONT_FAMILY }}
-                    >
-                        Reset range
-                    </button>
-                </div>
-            </div>
-            
-            {/* Resizer handle (hidden on mobile) */}
+            {/* Resizer handle - hidden on mobile */}
             {!isMobileLayout && (
                 <div
-                    className={`w-1 bg-gray-300 cursor-col-resize hover:bg-blue-400 active:bg-blue-500 transition-colors -mr-4`}
+                    className={`w-1 bg-gray-300 cursor-col-resize hover:bg-blue-400 active:bg-blue-500 transition-colors `}
                     onMouseDown={handleResizeStart}
                     onTouchStart={handleResizeStart}
-                    style={{ height: chartHeight, marginTop: -4 }}
+                    style={{ height: chartContainerHeight, marginTop: 0 }}
                 />
             )}
-            
+
             {/* Side Pane */}
             <div 
-                className={`bg-white border-l border-gray-200 p-4 rounded-lg shadow-sm overflow-y-auto ${isMobileLayout ? 'w-full order-first' : 'shrink-0'}`}
-                style={{ width: isMobileLayout ? '100%' : `${paneWidth}px` }}
+                className={`border-l border-gray-200 p-4 rounded-lg shadow-sm overflow-y-auto overflow-x-hidden ${isMobileLayout ? 'w-full order-first' : 'flex-1'}`}
+                style={{ 
+                    minWidth: `${paneWidth}px`, 
+                    height: isMobileLayout ? 'auto' : chartContainerHeight
+                }}
             >
                 {/* Search Bar */}
                 <div className="mb-4">

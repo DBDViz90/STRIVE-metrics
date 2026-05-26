@@ -26,6 +26,8 @@ export default function App() {
     const [metadata, setMetadata] = useState([]);
     // GDP range slider state for scatter plot
     const [xDomain, setXDomain] = useState(null);
+    // Year range slider state for line chart
+    const [yearDomain, setYearDomain] = useState([1960, 2024]);
     
     const [metricsData, setMetricsData] = useState({ data: [], seriesKeys: [] });
     const [regressionResults, setRegressionResults] = useState([]);
@@ -43,6 +45,15 @@ export default function App() {
         return [minX || 0, maxX || 100];
     }, [metricsData.data, selectedPredictorType]);
 
+    // Calculate year range for line chart slider
+    const yearRange = useMemo(() => {
+        if (metricsData.data.length === 0) return [1960, 2024];
+        const allYears = metricsData.data.map(d => d.year).filter(y => y !== null && y !== undefined);
+        if (allYears.length === 0) return [1960, 2024];
+        const [minY, maxY] = d3.extent(allYears);
+        return [minY || 1960, maxY || 2024];
+    }, [metricsData.data]);
+
     // Auto-update xDomain when metric or predictor changes
     useEffect(() => {
         if (selectedMetric) {
@@ -58,6 +69,40 @@ export default function App() {
             setXDomain(gdpRange);
         }
     }, [selectedMetric, metricsData.data, gdpRange, selectedPredictorType]);
+
+    // Auto-update yearDomain for line chart when metric changes
+    useEffect(() => {
+        if (chartType === 'line') {
+            if (yearDomain === null || yearDomain[0] === undefined || yearDomain[1] === undefined || yearDomain.length !== 2) {
+                // Initialize to full data range, clamped to [1960, 2024]
+                const allYears = metricsData.data.map(d => d.year).filter(y => y !== null && y !== undefined);
+                if (allYears.length > 0) {
+                    const [minY, maxY] = d3.extent(allYears);
+                    setYearDomain([
+                        Math.max(1960, minY || 1960),
+                        Math.min(2024, maxY || 2024)
+                    ]);
+                } else {
+                    setYearDomain([1960, 2024]);
+                }
+            }
+            if (selectedMetric) {
+                const metricData = metricsData.data.filter(d => d[selectedMetric] !== null && d[selectedMetric] !== undefined);
+                const metricYears = metricData.map(d => d.year).filter(y => y != null);
+                if (metricYears.length > 0) {
+                    const [minY, maxY] = d3.extent(metricYears);
+                    setYearDomain([
+                        Math.max(1960, minY || 1960),
+                        Math.min(2024, maxY || 2024)
+                    ]);
+                    return;
+                }
+            }
+            if (yearDomain === null || yearDomain[0] === undefined || yearDomain[1] === undefined || yearDomain.length !== 2) {
+                setYearDomain([1960, 2024]);
+            }
+        }
+    }, [chartType, selectedMetric, metricsData.data]);
 
     // Load all data on mount
     useEffect(() => {
@@ -80,6 +125,12 @@ export default function App() {
                 const allCategories = [...new Set(meta.map(m => m.category).filter(c => c))];
                 setSelectedCategories(allCategories);
                 setSelectedModelTypes(['Constant', 'Undefined', '↑ Linear', '↓ Linear', '↑ Saturating', '↓ Saturating']);
+                
+                // Initialize year domain for line chart
+                const allYears = swissMetrics.data.map(d => d.year).filter(y => y !== null && y !== undefined);
+                if (allYears.length > 0) {
+                    setYearDomain(d3.extent(allYears));
+                }
                 
                 setError(null);
             } catch (err) {
@@ -229,6 +280,8 @@ export default function App() {
                             xAxisLabel="Year"
                             yAxisLabel="Metric Value"
                             title="Swiss Metrics Explorer"
+                            yearDomain={yearDomain}
+                            setYearDomain={setYearDomain}
                         />
                     )}
                 </div>
@@ -258,6 +311,36 @@ export default function App() {
                                 } else {
                                     setXDomain(gdpRange);
                                 }
+                            }}
+                            className="px-3 py-1 text-xs bg-gray-100 rounded hover:bg-gray-200 transition-colors whitespace-nowrap"
+                        >
+                            Reset range
+                        </button>
+                    </div>
+                )}
+
+                {/* Year Range Slider for Line Chart */}
+                {chartType === 'line' && (
+                    <div className="mt-4 px-2 flex items-center gap-4 rounded-lg shadow-sm ">
+                        <Slider
+                            value={yearDomain || yearRange}
+                            min={yearRange[0]}
+                            max={yearRange[1]}
+                            onChange={setYearDomain}
+                            label="Year range"
+                            unit=""
+                        />
+                        <button
+                            onClick={() => {
+                                if (selectedMetric) {
+                                    const metricData = metricsData.data.filter(d => d[selectedMetric] !== null && d[selectedMetric] !== undefined);
+                                    const metricYears = metricData.map(d => d.year).filter(y => y != null);
+                                    if (metricYears.length > 0) {
+                                        setYearDomain(d3.extent(metricYears));
+                                        return;
+                                    }
+                                }
+                                setYearDomain(yearRange);
                             }}
                             className="px-3 py-1 text-xs bg-gray-100 rounded hover:bg-gray-200 transition-colors whitespace-nowrap"
                         >
