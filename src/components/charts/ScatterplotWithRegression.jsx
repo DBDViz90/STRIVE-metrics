@@ -191,8 +191,6 @@ export const ScatterplotWithRegression = ({
     const scale = window.innerWidth < 1300 ? 0.85 : 0.8;
     // Chart width: nearly full width when pane collapsed, scaled width when expanded
     const chartWidth = isPaneCollapsed ? width * 0.8 : width * scale * 0.85;
-    // Button position: at right edge of container when collapsed, at chart right when expanded
-    const buttonLeft = isPaneCollapsed ? width - 40 : chartWidth;
     const chartHeight = chartWidth + marginDifference;
     const boundsWidth = chartWidth - totalHorizontalMargin;
     const boundsHeight = chartHeight - totalVerticalMargin;
@@ -646,9 +644,36 @@ export const ScatterplotWithRegression = ({
                                         const gdpLabel = selectedPredictorType === 'CHF_LCU' ? 'GDP (constant CHF)' : 'GDP (current USD)';
                                         setHoveredIndex(i);
                                         setIsChartHovered(true);
+                                        const svgElement = e.currentTarget.ownerSVGElement;
+                                        const svgRect = svgElement.getBoundingClientRect();
+                                        const mouseX = e.clientX - svgRect.left - MARGIN.left;
+                                        
+                                        // Clamp mouseX to bounds
+                                        if (mouseX < 0 || mouseX > boundsWidth) {
+                                            setHoveredPoint(null);
+                                            return;
+                                        }
+                                        
+                                        // Calculate tooltip dimensions (fixed width for consistent positioning)
+                                        const tooltipWidth = 300;
+                                        const tooltipHeight = 60; // Fixed height for 3 lines
+                                        
+                                        // X-position: adapt based on cursor position
+                                        let xPos;
+                                        if (mouseX < boundsWidth / 2) {
+                                            // Cursor on left side: align tooltip left edge slightly right of cursor
+                                            xPos = e.clientX - svgRect.left + 10;
+                                        } else {
+                                            // Cursor on right side: align tooltip right edge slightly left of cursor
+                                            xPos = e.clientX - svgRect.left - tooltipWidth *0.8;
+                                        }
+                                        
+                                        // Y-position: center tooltip on cursor
+                                        const yPos = e.clientY - svgRect.top - tooltipHeight / 2;
+                                        
                                         setHoveredPoint({
-                                            xPos: MARGIN.left + xScale(point.x) - 150,
-                                            yPos: MARGIN.top + yScale(point.y) - 10,
+                                            xPos: xPos,
+                                            yPos: yPos,
                                             year: point.year,
                                             metricValue: `Metric value: ${formatValue(point.y)}`,
                                             gdpValue: `${gdpLabel}: ${formatGDP(point.x)}`
@@ -820,7 +845,7 @@ export const ScatterplotWithRegression = ({
                 </svg>
                 
                 {/* Tooltip */}
-                <Tooltip interactionData={hoveredPoint} />
+                <Tooltip interactionData={hoveredPoint} fontSize={itemFontSize} />
             </div>
 
             {/* Collapse/Expand button - hidden on mobile, positioned at right edge of chart or container */}
@@ -829,8 +854,9 @@ export const ScatterplotWithRegression = ({
                     onClick={() => setIsCollapsed(!isCollapsed)}
                     className="absolute w-8 h-8 bg-blue-500 hover:bg-blue-600 rounded-md shadow border border-blue-600 flex items-center justify-center transition-colors z-20 text-white"
                     style={{
-                        left: buttonLeft,
-                        top: 16
+                        right: isPaneCollapsed ? 0 : width - chartWidth,
+                        top: 16,
+                        fontSize: 30
                     }}
                     title={isCollapsed ? 'Expand pane' : 'Collapse pane'}
                 >
@@ -841,7 +867,7 @@ export const ScatterplotWithRegression = ({
             {/* Side Pane */}
             {!isPaneCollapsed && (
                 <div 
-                    className={`border-l border-gray-200 bg-[#f5f5f5ba]  p-4 rounded-lg shadow-sm ${isMobileLayout ? 'w-full pl-4 order-first overflow-y-auto overflow-x-hidden' : 'pl-10 overflow-y-auto overflow-x-hidden'}`}
+                    className={`border-l border-gray-200 bg-[#f5f5f5ba]  p-4 rounded-lg shadow-sm ${isMobileLayout ? 'w-full pl-4 order-first overflow-y-auto overflow-x-hidden' : 'pl-3 overflow-y-auto overflow-x-hidden'}`}
                     style={{ 
                         flex: isMobileLayout ? undefined : '1',
                         height: isMobileLayout ? 'auto' : chartContainerHeight,
@@ -851,12 +877,15 @@ export const ScatterplotWithRegression = ({
                 >
                 {/* Search Bar */}
                 <div className="mb-4">
-                    <SearchBar
-                        value={searchQuery}
-                        onChange={setSearchQuery}
-                        placeholder="Search for a metric"
-                        style={{ fontFamily: FONT_FAMILY, fontSize: itemFontSize }}
-                    />
+                    <div className="relative">
+                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">🔍</span>
+                        <SearchBar
+                            value={searchQuery}
+                            onChange={setSearchQuery}
+                            placeholder="Search for a metric"
+                            style={{ fontFamily: FONT_FAMILY, fontSize: itemFontSize, paddingLeft: '2.5rem' }}
+                        />
+                    </div>
                 </div>
                 
                 {/* Predictor type selector */}
@@ -1001,8 +1030,8 @@ export const ScatterplotWithRegression = ({
                     {selectedMetric && (
                         <button
                             onClick={clearSelection}
-                            className="px-3 py-1 text-xs bg-gray-100 rounded hover:bg-gray-200 transition-colors"
-                            style={{ fontFamily: FONT_FAMILY }}
+                            className="px-3 py-1 text-xs bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors"
+                            style={{ fontFamily: FONT_FAMILY, fontSize: itemFontSize }}
                         >
                             Clear
                         </button>

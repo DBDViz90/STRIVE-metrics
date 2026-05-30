@@ -186,7 +186,7 @@ export const LineChartWithMetrics = ({
     const isMobileLayout = width < MOBILE_BREAKPOINT;
     const isPaneCollapsed = isMobileLayout || isCollapsed;
     const scale = window.innerWidth < 1300 ? 0.85 : 0.8;
-    const chartWidth = isPaneCollapsed ? width * 0.95 : width * scale * 0.85;
+    const chartWidth = isPaneCollapsed ? width * 0.8 : width * scale * 0.85;
 
     // Square axis area calculation with height scaling (match scatter plot)
     const totalHorizontalMargin = MARGIN.left + MARGIN.right;
@@ -559,7 +559,7 @@ export const LineChartWithMetrics = ({
                                 const point = lineData[closestIndex];
                                 setHoveredIndex(closestIndex);
                                 setHoveredPoint({
-                                    xPos: MARGIN.left + xScale(point.year) - 120,
+                                    xPos: MARGIN.left + xScale(point.year) - 155,
                                     yPos: MARGIN.top + yScale(point.value) - 20,
                                     year: point.year,
                                     metricValue: `Metric value: ${formatValue(point.value)}`
@@ -715,7 +715,7 @@ export const LineChartWithMetrics = ({
                     </svg>
                     
                     {/* Tooltip */}
-                    <Tooltip interactionData={hoveredPoint} />
+                    <Tooltip interactionData={hoveredPoint} fontSize={itemFontSize*0.9} />
                 </div>
 
             {/* Collapse/Expand button - hidden on mobile */}
@@ -724,8 +724,9 @@ export const LineChartWithMetrics = ({
                     onClick={() => setIsCollapsed(!isCollapsed)}
                     className="absolute w-8 h-8 bg-blue-500 hover:bg-blue-600 rounded-md shadow border border-blue-600 flex items-center justify-center transition-colors z-20 text-white"
                     style={{
-                        left: isPaneCollapsed ? width - 40 : chartWidth,
-                        top: 16
+                        right: isPaneCollapsed ? 0 : width - chartWidth,
+                        top: 16,
+                        fontSize: 30
                     }}
                     title={isCollapsed ? 'Expand pane' : 'Collapse pane'}
                 >
@@ -736,7 +737,7 @@ export const LineChartWithMetrics = ({
             {/* Side Pane */}
             {!isPaneCollapsed && (
                 <div 
-                    className={`border-l border-gray-200 bg-[#f5f5f5ba] p-4 rounded-lg shadow-sm ${isMobileLayout ? 'w-full pl-4 order-first overflow-y-auto overflow-x-hidden' : 'pl-10 overflow-y-auto overflow-x-hidden'}`}
+                    className={`border-l border-gray-200 bg-[#f5f5f5ba] p-4 rounded-lg shadow-sm ${isMobileLayout ? 'w-full pl-4 order-first overflow-y-auto overflow-x-hidden' : 'pl-3 overflow-y-auto overflow-x-hidden'}`}
                     style={{ 
                         flex: isMobileLayout ? undefined : '1',
                         height: isMobileLayout ? 'auto' : chartContainerHeight,
@@ -745,12 +746,15 @@ export const LineChartWithMetrics = ({
                 >
                 {/* Search Bar */}
                 <div className="mb-4">
-                    <SearchBar
-                        value={searchQuery}
-                        onChange={setSearchQuery}
-                        placeholder="Search for a metric"
-                        style={{ fontFamily: FONT_FAMILY, fontSize: itemFontSize }}
-                    />
+                    <div className="relative">
+                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">🔍</span>
+                        <SearchBar
+                            value={searchQuery}
+                            onChange={setSearchQuery}
+                            placeholder="Search for a metric"
+                            style={{ fontFamily: FONT_FAMILY, fontSize: itemFontSize, paddingLeft: '2.5rem' }}
+                        />
+                    </div>
                 </div>
                 
                 {/* Predictor type selector */}
@@ -898,8 +902,8 @@ export const LineChartWithMetrics = ({
                     {selectedMetric && (
                         <button
                             onClick={clearSelection}
-                            className="px-3 py-1 text-xs bg-gray-100 rounded hover:bg-gray-200 transition-colors"
-                            style={{ fontFamily: FONT_FAMILY }}
+                            className="px-3 py-1 text-xs bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors"
+                            style={{ fontFamily: FONT_FAMILY, fontSize: itemFontSize }}
                         >
                             Clear
                         </button>

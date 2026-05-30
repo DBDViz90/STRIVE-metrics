@@ -191,9 +191,8 @@ export default function App() {
                     <div className="flex justify-between items-center h-16">
                         <div className="flex items-center">
                             <h1 className="text-xl font-bold text-gray-900">PA_UNIL STRIVE metric tool</h1>
-                            <span className="ml-3 text-sm text-gray-500">Regression analyzer</span>
                         </div>
-                        <div className="text-sm text-gray-500">
+                        <div className="text-md text-gray-500">
                             🇨🇭 Switzerland data between 1960 and 2024
                         </div>
                     </div>
@@ -205,23 +204,23 @@ export default function App() {
                 <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-2 flex gap-2">
                     <button
                         onClick={() => setAnalysisMode('single')}
-                        className={`px-4 py-2 text-sm font-medium rounded transition-colors ${
+                        className={`px-4 py-2 text-md font-medium rounded transition-colors ${
                             analysisMode === 'single' 
                                 ? 'bg-blue-500 text-white' 
                                 : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                         }`}
                     >
-                        Single Metric Analysis
+                        Single-metric regression for trend analysis
                     </button>
                     <button
                         onClick={() => setAnalysisMode('multi')}
-                        className={`px-4 py-2 text-sm font-medium rounded transition-colors ${
+                        className={`px-4 py-2 text-md font-medium rounded transition-colors ${
                             analysisMode === 'multi' 
                                 ? 'bg-blue-500 text-white' 
                                 : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                         }`}
                     >
-                        Multi-Metric Analysis
+                        Multi-metric decoupling analysis
                     </button>
                 </div>
             </div>
@@ -232,19 +231,19 @@ export default function App() {
                     <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-2 flex gap-2">
                         <button
                             onClick={() => setChartType('scatter')}
-                        className={`px-4 py-2 text-sm font-medium rounded transition-colors ${
+                        className={`px-4 py-2 text-md font-medium rounded transition-colors ${
                             chartType === 'scatter' 
-                                ? 'bg-blue-500 text-white' 
+                                ? 'bg-cyan-500 text-white' 
                                 : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                         }`}
                     >
-                        Scatter plot (Metric vs GDP)
+                        Scatter plot regression (Metric vs GDP)
                     </button>
                     <button
                         onClick={() => setChartType('line')}
-                        className={`px-4 py-2 text-sm font-medium rounded transition-colors ${
+                        className={`px-4 py-2 text-md font-medium rounded transition-colors ${
                             chartType === 'line' 
-                                ? 'bg-blue-500 text-white' 
+                                ? 'bg-cyan-500 text-white' 
                                 : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                         }`}
                     >

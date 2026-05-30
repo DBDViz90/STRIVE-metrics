@@ -1,4 +1,4 @@
-export const Tooltip = ({ interactionData }) => {
+export const Tooltip = ({ interactionData, fontSize = '11px' }) => {
   if (!interactionData) {
     return null;
   }
@@ -15,12 +15,12 @@ export const Tooltip = ({ interactionData }) => {
         pointerEvents: 'none',
         zIndex: 1000,
         fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
-        fontSize: '11px',
+        fontSize: fontSize,
         border: '1px solid #ccc',
         borderRadius: '4px',
         boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
-        whiteSpace: 'nowrap',
-        maxWidth: '140px',
+        whiteSpace: 'normal',
+        maxWidth: typeof fontSize === 'string' ? '200px' : `${fontSize * 18}px`,
         color: '#333',
       }}
     >

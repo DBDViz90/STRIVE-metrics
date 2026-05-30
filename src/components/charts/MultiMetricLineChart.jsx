@@ -373,14 +373,12 @@ export const MultiMetricLineChart = ({
     const boundsHeight = chartHeight - totalVerticalMargin;
     const chartContainerHeight = isMobileLayout ? chartHeight + 100 : chartHeight;
     
-    // Button position
-    const buttonLeft = isPaneCollapsedState ? width - 40 : chartWidth;
-    
     // Font sizes based on width (matching ScatterplotWithRegression)
     const titleFontSize = Math.max(14, width * 0.022);
     const axisLabelFontSize = Math.max(10, width * 0.017);
     const tickFontSize = Math.max(8, width * 0.015);
     const itemFontSize = Math.max(11, width * 0.015);
+    const tooltipFontSize = Math.max(11, width * 0.013);
     
     // Get all years from chartData
     const years = useMemo(() => {
@@ -544,7 +542,7 @@ export const MultiMetricLineChart = ({
             xPos = e.clientX - svgRect.left + 10;
         } else {
             // Cursor on right side: align tooltip right edge slightly left of cursor
-            xPos = e.clientX - svgRect.left - tooltipWidth*1;
+            xPos = e.clientX - svgRect.left - tooltipWidth*1.3;
         }
 
         // Y-position: center tooltip on cursor
@@ -622,24 +620,25 @@ export const MultiMetricLineChart = ({
     }, [metricLineData, boundsWidth, yScale]);
     
     return (
-        <div ref={containerRef} className="flex flex-col md:flex-row relative gap-4" style={{ width, height: chartContainerHeight, fontFamily: FONT_FAMILY, alignItems: 'flex-start', overflow: 'hidden' }}>
+        <div ref={containerRef} className="flex flex-col md:flex-row relative gap-6" style={{ width, height: chartContainerHeight, fontFamily: FONT_FAMILY, alignItems: 'flex-start', overflow: 'hidden' }}>
+            {/* Collapse/Expand Button */}
+            {!isMobileLayout && (
+                <button
+                    onClick={() => setIsCollapsed(!isCollapsed)}
+                    className="absolute w-8 h-8 bg-blue-500 hover:bg-blue-600 rounded-md shadow border border-blue-600 flex items-center justify-center transition-colors z-20 text-white"
+                    style={{
+                        right: isPaneCollapsedState ? 0 : width - chartWidth*1.03,
+                        top: 16,
+                        fontSize: 30
+                    }}
+                    title={isPaneCollapsedState ? 'Expand pane' : 'Collapse pane'}
+                >
+                    {isPaneCollapsedState ? '←' : '→'}
+                </button>
+            )}
+            
             {/* Chart Container */}
             <div className="relative" style={{ width: chartWidth, height: chartContainerHeight }}>
-                {/* Collapse/Expand Button */}
-                {!isMobileLayout && (
-                    <button
-                        onClick={() => setIsCollapsed(!isCollapsed)}
-                        className="absolute w-8 h-8 bg-blue-500 hover:bg-blue-600 rounded-md shadow border border-blue-600 flex items-center justify-center transition-colors z-20 text-white"
-                        style={{
-                            left: buttonLeft,
-                            top: 16
-                        }}
-                        title={isPaneCollapsedState ? 'Expand pane' : 'Collapse pane'}
-                    >
-                        {isPaneCollapsedState ? '←' : '→'}
-                    </button>
-                )}
-                
                 {/* Chart */}
                 <svg
                     width={chartWidth}
@@ -661,7 +660,7 @@ export const MultiMetricLineChart = ({
                                     fill="#333"
                                     fontWeight="bold"
                                 >
-                                    Decoupling chart
+                                    Multi line chart for decoupling analysis
                                 </text>
                                 <text
                                     x={boundsWidth / 2}
@@ -817,7 +816,7 @@ export const MultiMetricLineChart = ({
                             pointerEvents: 'none',
                             zIndex: 1000,
                             fontFamily: FONT_FAMILY,
-                            fontSize: '11px',
+                            fontSize: tooltipFontSize,
                             border: '1px solid #ccc',
                             borderRadius: '4px',
                             boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
@@ -827,7 +826,7 @@ export const MultiMetricLineChart = ({
                     >
                         <div style={{ backgroundColor: '#f0f0f0', padding: '2px 6px' }}>
                             {tooltipData.year}
-                            <div style={{ fontSize: '10px', color: '#666', marginTop: '1px' }}>
+                            <div style={{ fontSize: tooltipFontSize * 0.9, color: '#666', marginTop: '1px' }}>
                                 % change since {tooltipData.startingYear}
                             </div>
                         </div>
@@ -851,7 +850,7 @@ export const MultiMetricLineChart = ({
             {/* Side Pane */}
             {!isPaneCollapsedState && (
                 <div 
-                    className={`border-l border-gray-200 bg-[#f5f5f5] p-4 rounded-lg shadow-sm ${isMobileLayout ? 'w-full pl-4 order-first overflow-y-auto overflow-x-hidden' : 'pl-10 overflow-y-auto overflow-x-hidden'}`}
+                    className={`border-l border-gray-200 bg-[#f5f5f5] p-4 rounded-lg shadow-sm ${isMobileLayout ? 'w-full pl-4 order-first overflow-y-auto overflow-x-hidden' : 'pl-3 overflow-y-auto overflow-x-hidden'}`}
                     style={{
                         flex: isMobileLayout ? 'auto' : '1',
                         height: isMobileLayout ? 'auto' : chartContainerHeight,
@@ -924,12 +923,13 @@ export const MultiMetricLineChart = ({
                     {/* SECTION 2: Filters and Sort */}
                     <div className="mb-6 space-y-4">
                         {/* Search Bar */}
-                        <div>
+                        <div className="relative">
+                            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">🔍</span>
                             <SearchBar
                                 value={searchQuery}
                                 onChange={setSearchQuery}
                                 placeholder="Search for a metric"
-                                style={{ fontFamily: FONT_FAMILY, fontSize: itemFontSize }}
+                                style={{ fontFamily: FONT_FAMILY, fontSize: itemFontSize, paddingLeft: '2.5rem' }}
                             />
                         </div>
                         
