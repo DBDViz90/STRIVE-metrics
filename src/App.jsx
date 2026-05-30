@@ -7,6 +7,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { ResponsiveScatterplotWithRegression } from './components/charts/ScatterplotWithRegression';
 import { ResponsiveLineChartWithMetrics } from './components/charts/LineChartWithMetrics';
+import { ResponsiveMultiMetricLineChart } from './components/charts/MultiMetricLineChart';
 import { loadSwissMetrics, loadRegressionResults, loadMetricsByCategory, loadMetadata } from './lib/data-loader';
 import { Slider } from './components/custom_ui/Slider';
 
@@ -14,6 +15,7 @@ import { Slider } from './components/custom_ui/Slider';
 import * as d3 from 'd3';
 
 export default function App() {
+    const [analysisMode, setAnalysisMode] = useState('single'); // 'single' or 'multi'
     const [chartType, setChartType] = useState('scatter'); // 'scatter' or 'line'
     // Shared right pane state
     const [selectedMetric, setSelectedMetric] = useState(null);
@@ -198,11 +200,38 @@ export default function App() {
                 </div>
             </header>
 
-            {/* Chart Type Toggle */}
+            {/* Analysis Mode Toggle */}
             <div className="w-[60vw] mx-auto px-4 sm:px-6 lg:px-8 py-2"> 
                 <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-2 flex gap-2">
                     <button
-                        onClick={() => setChartType('scatter')}
+                        onClick={() => setAnalysisMode('single')}
+                        className={`px-4 py-2 text-sm font-medium rounded transition-colors ${
+                            analysisMode === 'single' 
+                                ? 'bg-blue-500 text-white' 
+                                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                        }`}
+                    >
+                        Single Metric Analysis
+                    </button>
+                    <button
+                        onClick={() => setAnalysisMode('multi')}
+                        className={`px-4 py-2 text-sm font-medium rounded transition-colors ${
+                            analysisMode === 'multi' 
+                                ? 'bg-blue-500 text-white' 
+                                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                        }`}
+                    >
+                        Multi-Metric Analysis
+                    </button>
+                </div>
+            </div>
+
+            {/* Chart Type Toggle - Only shown in single mode */}
+            {analysisMode === 'single' && (
+                <div className="w-[60vw] mx-auto px-4 sm:px-6 lg:px-8 py-2"> 
+                    <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-2 flex gap-2">
+                        <button
+                            onClick={() => setChartType('scatter')}
                         className={`px-4 py-2 text-sm font-medium rounded transition-colors ${
                             chartType === 'scatter' 
                                 ? 'bg-blue-500 text-white' 
@@ -223,13 +252,27 @@ export default function App() {
                     </button>
                 </div>
             </div>
+            )}
 
             {/* Main Content */}
             <main className="w-[60vw] mx-auto px-4 sm:px-6 lg:px-8 py-0"> 
-                {/* Chart */}
-                <div className="bg-white rounded-lg shadow-sm border border-gray-200 -mr-18" >
-                    {chartType === 'scatter' ? (
-                        <ResponsiveScatterplotWithRegression
+                {analysisMode === 'multi' ? (
+                    /* Multi-Metric Analysis View */
+                    <div className="bg-white rounded-lg shadow-sm border border-gray-200 -mr-18">
+                        <ResponsiveMultiMetricLineChart
+                            data={metricsData.data}
+                            seriesKeys={metricsData.seriesKeys}
+                            regressionResults={regressionResults}
+                            metadata={metadata}
+                        />
+                    </div>
+                ) : (
+                    /* Single Metric Analysis View */
+                    <>
+                        {/* Chart */}
+                        <div className="bg-white rounded-lg shadow-sm border border-gray-200 -mr-18" >
+                            {chartType === 'scatter' ? (
+                                <ResponsiveScatterplotWithRegression
                             data={metricsData.data}
                             seriesKeys={metricsData.seriesKeys}
                             regressionResults={regressionResults}
@@ -254,7 +297,7 @@ export default function App() {
                             title="Swiss Metrics Explorer"
                         />
                     ) : (
-                        <ResponsiveLineChartWithMetrics
+                                <ResponsiveLineChartWithMetrics
                             data={metricsData.data}
                             seriesKeys={metricsData.seriesKeys}
                             regressionResults={regressionResults}
@@ -368,6 +411,9 @@ export default function App() {
                         </ul>
                     </div>
                 </div>
+
+                    </>
+                )}
 
             </main>
         </div>

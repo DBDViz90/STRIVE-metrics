@@ -907,6 +907,9 @@ export const LineChartWithMetrics = ({
                 </div>
                 
                 {/* Metric List */}
+                <div className="text-sm font-medium text-gray-700 mb-2" style={{ fontSize: itemFontSize }}>
+                    All Metrics ({filteredSeriesKeys.length})
+                </div>
                 <div 
                     className="space-y-1"
                     ref={metricListRef}
