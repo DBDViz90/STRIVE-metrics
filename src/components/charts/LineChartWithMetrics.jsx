@@ -7,9 +7,9 @@ import * as d3 from 'd3';
 import { Delaunay } from 'd3-delaunay';
 import { AxisLeft } from '../Axes/AxisLeft';
 import { AxisBottom } from '../Axes/AxisBottom';
-import { Slider } from '../ui/Slider';
-import { SearchBar } from '../ui/SearchBar';
-import { Tooltip } from '../ui/Tooltip';
+import { Slider } from '../custom_ui/Slider';
+import { SearchBar } from '../custom_ui/SearchBar';
+import { Tooltip } from '../custom_ui/Tooltip';
 import { useDimensions } from '../../../hooks/use-dimensions';
 
 const FONT_FAMILY = '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
@@ -102,8 +102,7 @@ function getR2Value(regression) {
  * @param {Function} [props.onModelTypesChange] - Callback when model types change
  * @param {string} [props.selectedPredictorType='CHF_LCU'] - Currently selected predictor type
  * @param {Function} [props.onPredictorChange] - Callback when predictor type changes
- * @param {number} [props.paneWidth] - Current pane width (controlled)
- * @param {Function} [props.onPaneWidthChange] - Callback when pane width changes
+
  * @param {Function} [props.onSwitchToLineChart] - Callback to switch to line chart (no-op for line chart)
  * @param {string} [props.xAxisLabel='Year'] - Label for x-axis
  * @param {string} [props.yAxisLabel='Metric Value'] - Label for y-axis
@@ -128,8 +127,6 @@ export const LineChartWithMetrics = ({
     onModelTypesChange: externalOnModelTypesChange,
     selectedPredictorType: externalSelectedPredictorType,
     onPredictorChange: externalOnPredictorChange,
-    paneWidth: externalPaneWidth,
-    onPaneWidthChange: externalOnPaneWidthChange,
     onSwitchToLineChart,
     xAxisLabel = 'Year',
     yAxisLabel = 'Metric Value',
@@ -159,25 +156,19 @@ export const LineChartWithMetrics = ({
     const [internalSelectedPredictorType, setInternalSelectedPredictorType] = useState('CHF_LCU');
     const selectedPredictorType = externalSelectedPredictorType !== undefined ? externalSelectedPredictorType : internalSelectedPredictorType;
     const setSelectedPredictorType = externalOnPredictorChange !== undefined ? externalOnPredictorChange : setInternalSelectedPredictorType;
-    const [internalPaneWidth, setInternalPaneWidth] = useState(200);
-    const paneWidth = externalPaneWidth !== undefined ? externalPaneWidth : internalPaneWidth;
-    const setPaneWidth = externalOnPaneWidthChange !== undefined ? externalOnPaneWidthChange : setInternalPaneWidth;
     
     // Use controlled yearDomain from props, fallback to internal state
     const yearDomain = externalYearDomain !== undefined ? externalYearDomain : null;
     const setYearDomain = externalSetYearDomain !== undefined ? externalSetYearDomain : (() => {});
     
     // Local state (not shared)
-    const [isResizing, setIsResizing] = useState(false);
+    const [isCollapsed, setIsCollapsed] = useState(false);
     const [showCategoryDropdown, setShowCategoryDropdown] = useState(false);
     const [showModelDropdown, setShowModelDropdown] = useState(false);
     const [hoveredIndex, setHoveredIndex] = useState(null);
     const [hoveredPoint, setHoveredPoint] = useState(null);
     
     // Constants
-    const MIN_PANE_WIDTH = 150;
-    const MAX_PANE_WIDTH = 400;
-    const GAP = 16;
     const MOBILE_BREAKPOINT = 608;
     const MARGIN = { top: 80, right: 30, bottom: 70, left: 110 };
     const containerRef = useRef(null);
@@ -193,16 +184,14 @@ export const LineChartWithMetrics = ({
     
     // Responsive layout
     const isMobileLayout = width < MOBILE_BREAKPOINT;
-    const effectivePaneWidth = isMobileLayout ? 0 : paneWidth;
-    const effectiveGap = isMobileLayout ? 0 : GAP;
-    const availableWidth = width - effectivePaneWidth - effectiveGap;
+    const isPaneCollapsed = isMobileLayout || isCollapsed;
+    const scale = window.innerWidth < 1300 ? 0.85 : 0.8;
+    const chartWidth = isPaneCollapsed ? width * 0.95 : width * scale * 0.85;
 
     // Square axis area calculation with height scaling (match scatter plot)
     const totalHorizontalMargin = MARGIN.left + MARGIN.right;
     const totalVerticalMargin = MARGIN.top + MARGIN.bottom;
     const marginDifference = totalVerticalMargin - totalHorizontalMargin;
-    const scale = window.innerWidth < 1300 ? 0.85 : 0.8;
-    const chartWidth = availableWidth * scale;
     const chartHeight = chartWidth + marginDifference;
     const boundsWidth = chartWidth - totalHorizontalMargin;
     const boundsHeight = chartHeight - totalVerticalMargin;
@@ -214,50 +203,7 @@ export const LineChartWithMetrics = ({
     const tickFontSize = Math.max(8, width * 0.015);
     const itemFontSize = Math.max(11, width * 0.015);
     
-    // Ref to track resizing state for event handlers (avoids closure issues)
-    const isResizingRef = useRef(false);
-    
-    // Handle pane resize
-    const handleResize = useCallback((e) => {
-        if (!isResizingRef.current || !containerRef.current || isMobileLayout) return;
-        
-        const rect = containerRef.current.getBoundingClientRect();
-        const clientX = e.touches ? e.touches[0].clientX : e.clientX;
-        // Calculate new pane width: container width - (mouse X from container left)
-        const newWidth = rect.width - (clientX - rect.left);
-        
-        // Constrain within bounds
-        const constrainedWidth = Math.max(MIN_PANE_WIDTH, Math.min(MAX_PANE_WIDTH, newWidth));
-        setPaneWidth(constrainedWidth);
-    }, [isMobileLayout]);
-    
-    const handleResizeEnd = useCallback(() => {
-        isResizingRef.current = false;
-        setIsResizing(false);
-        document.body.style.cursor = '';
-    }, []);
-    
-    const handleResizeStart = useCallback((e) => {
-        e.preventDefault();
-        isResizingRef.current = true;
-        setIsResizing(true);
-        document.body.style.cursor = 'col-resize';
-        document.addEventListener('mousemove', handleResize);
-        document.addEventListener('mouseup', handleResizeEnd);
-        document.addEventListener('touchmove', handleResize);
-        document.addEventListener('touchend', handleResizeEnd);
-    }, [handleResize, handleResizeEnd]);
-    
-    // Cleanup event listeners on unmount
-    useEffect(() => {
-        return () => {
-            document.removeEventListener('mousemove', handleResize);
-            document.removeEventListener('mouseup', handleResizeEnd);
-            document.removeEventListener('touchmove', handleResize);
-            document.removeEventListener('touchend', handleResizeEnd);
-            document.body.style.cursor = '';
-        };
-    }, [handleResize, handleResizeEnd]);
+
     
     // Close dropdowns when clicking outside
     useEffect(() => {
@@ -582,7 +528,7 @@ export const LineChartWithMetrics = ({
     return (
         <div ref={containerRef} className="flex flex-col md:flex-row relative" style={{ width, height: chartContainerHeight, fontFamily: FONT_FAMILY }}>
             {/* Main Chart Area */}
-            <div className="relative mr-8" style={{ width: chartWidth, height: chartContainerHeight }}>
+            <div className="relative" style={{ width: chartWidth, height: chartContainerHeight }}>
                 <svg 
                     width={chartWidth} 
                     height={chartHeight}
@@ -772,24 +718,31 @@ export const LineChartWithMetrics = ({
                     <Tooltip interactionData={hoveredPoint} />
                 </div>
 
-            {/* Resizer handle - hidden on mobile */}
+            {/* Collapse/Expand button - hidden on mobile */}
             {!isMobileLayout && (
-                <div
-                    className={`w-1 bg-gray-300 cursor-col-resize hover:bg-blue-400 active:bg-blue-500 transition-colors `}
-                    onMouseDown={handleResizeStart}
-                    onTouchStart={handleResizeStart}
-                    style={{ height: chartContainerHeight, marginTop: 0 }}
-                />
+                <button
+                    onClick={() => setIsCollapsed(!isCollapsed)}
+                    className="absolute w-8 h-8 bg-blue-500 hover:bg-blue-600 rounded-md shadow border border-blue-600 flex items-center justify-center transition-colors z-20 text-white"
+                    style={{
+                        left: isPaneCollapsed ? width - 40 : chartWidth,
+                        top: 16
+                    }}
+                    title={isCollapsed ? 'Expand pane' : 'Collapse pane'}
+                >
+                    {isCollapsed ? '←' : '→'}
+                </button>
             )}
 
             {/* Side Pane */}
-            <div 
-                className={`border-l border-gray-200 p-4 rounded-lg shadow-sm overflow-y-auto overflow-x-hidden ${isMobileLayout ? 'w-full order-first' : 'flex-1'}`}
-                style={{ 
-                    minWidth: `${paneWidth}px`, 
-                    height: isMobileLayout ? 'auto' : chartContainerHeight
-                }}
-            >
+            {!isPaneCollapsed && (
+                <div 
+                    className={`border-l border-gray-200 bg-[#f5f5f5ba] p-4 rounded-lg shadow-sm ${isMobileLayout ? 'w-full pl-4 order-first overflow-y-auto overflow-x-hidden' : 'pl-10 overflow-y-auto overflow-x-hidden'}`}
+                    style={{ 
+                        flex: isMobileLayout ? undefined : '1',
+                        height: isMobileLayout ? 'auto' : chartContainerHeight,
+                        maxHeight: chartContainerHeight
+                    }}
+                >
                 {/* Search Bar */}
                 <div className="mb-4">
                     <SearchBar
@@ -805,7 +758,7 @@ export const LineChartWithMetrics = ({
                     <select
                         value={selectedPredictorType}
                         onChange={(e) => setSelectedPredictorType(e.target.value)}
-                        className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white"
                         style={{ fontFamily: FONT_FAMILY, fontSize: itemFontSize }}
                     >
                         <option value="CHF_LCU">GDP : CHF (constant)</option>
@@ -817,7 +770,7 @@ export const LineChartWithMetrics = ({
                 <div className="mb-4 relative model-dropdown">
                     <button
                         onClick={() => setShowModelDropdown(!showModelDropdown)}
-                        className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent flex justify-between items-center"
+                        className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent flex justify-between items-center bg-white"
                         style={{ fontFamily: FONT_FAMILY, fontSize: itemFontSize }}
                     >
                         <span className="break-words text-left">{modelButtonText}</span>
@@ -840,7 +793,7 @@ export const LineChartWithMetrics = ({
                                     type="checkbox"
                                     checked={selectedModelTypes.length === allModelTypes.length && allModelTypes.length > 0}
                                     readOnly
-                                    className="mr-2 h-4 w-4 pointer-events-none"
+                                    className="mr-2 h-4 w-4 pointer-events-none bg-white"
                                 />
                                 <span className="text-sm font-semibold">Select All</span>
                             </button>
@@ -857,7 +810,7 @@ export const LineChartWithMetrics = ({
                                                 setSelectedModelTypes(selectedModelTypes.filter(m => m !== modelType));
                                             }
                                         }}
-                                        className="mr-2 h-4 w-4"
+                                        className="mr-2 h-4 w-4 bg-white"
                                     />
                                     <span className="text-sm">{modelType} ({modelTypeCounts[modelType] || 0})</span>
                                 </label>
@@ -870,7 +823,7 @@ export const LineChartWithMetrics = ({
                 <div className="mb-4 relative category-dropdown">
                     <button
                         onClick={() => setShowCategoryDropdown(!showCategoryDropdown)}
-                        className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent flex justify-between items-center"
+                        className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent flex justify-between items-center bg-white"
                         style={{ fontFamily: FONT_FAMILY, fontSize: itemFontSize }}
                     >
                         <span className="break-words text-left">{categoryButtonText}</span>
@@ -895,7 +848,7 @@ export const LineChartWithMetrics = ({
                                     type="checkbox"
                                     checked={selectedCategories.length === allCategories.length && allCategories.length > 0}
                                     readOnly
-                                    className="mr-2 h-4 w-4 pointer-events-none"
+                                    className="mr-2 h-4 w-4 pointer-events-none bg-white"
                                 />
                                 <span className="text-sm font-semibold">Select All</span>
                             </button>
@@ -912,7 +865,7 @@ export const LineChartWithMetrics = ({
                                                 setSelectedCategories(selectedCategories.filter(c => c !== cat));
                                             }
                                         }}
-                                        className="mr-2 h-4 w-4"
+                                        className="mr-2 h-4 w-4 bg-white"
                                     />
                                     <span className="text-sm">{cat}</span>
                                 </label>
@@ -926,7 +879,7 @@ export const LineChartWithMetrics = ({
                     <select
                         value={sortBy}
                         onChange={(e) => setSortBy(e.target.value)}
-                        className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white"
                         style={{ fontFamily: FONT_FAMILY, fontSize: itemFontSize }}
                     >
                         <option value="alphabetical">Sort by: Name (A-Z)</option>
@@ -997,10 +950,10 @@ export const LineChartWithMetrics = ({
                                 >
                                 {/* Color indicator */}
                                 <div 
-                                    className="w-4 h-4 rounded border-2 shrink-0"
+                                    className="w-4 h-4 rounded border-2 shrink-0 bg-white"
                                     style={{
                                         borderColor: color,
-                                        backgroundColor: isSelected ? color : 'transparent'
+                                        backgroundColor: isSelected ? color : 'white'
                                     }}
                                 />
                                 
@@ -1039,6 +992,7 @@ export const LineChartWithMetrics = ({
                     </div>
                 )}
             </div>
+        )}
         </div>
     );
 };

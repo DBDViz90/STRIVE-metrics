@@ -8,11 +8,11 @@
  */
 import { useState, useMemo, useRef, useCallback } from 'react';
 import * as d3 from 'd3';
-import { Checkbox } from '../ui/Checkbox.jsx';
+import { Checkbox } from '../custom_ui/Checkbox.jsx';
 import { AxisLeft } from '../Axes/AxisLeft.jsx';
 import { AxisBottom } from '../Axes/AxisBottom.jsx';
-import { Slider } from '../ui/Slider.jsx';
-import { SearchBar } from '../ui/SearchBar.jsx';
+import { Slider } from '../custom_ui/Slider.jsx';
+import { SearchBar } from '../custom_ui/SearchBar.jsx';
 import { useDimensions } from '../../../hooks/use-dimensions.js';
 
 const FONT_FAMILY = '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';

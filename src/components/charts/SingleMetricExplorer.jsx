@@ -9,8 +9,8 @@ import { useState, useMemo, useRef, useCallback, useEffect } from 'react';
 import * as d3 from 'd3';
 import { AxisLeft } from '../Axes/AxisLeft';
 import { AxisBottom } from '../Axes/AxisBottom';
-import { Slider } from '../ui/Slider';
-import { SearchBar } from '../ui/SearchBar';
+import { Slider } from '../custom_ui/Slider';
+import { SearchBar } from '../custom_ui/SearchBar';
 import { useDimensions } from '../../../hooks/use-dimensions';
 
 const FONT_FAMILY = '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';

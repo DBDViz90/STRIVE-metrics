@@ -7,8 +7,8 @@ import * as d3 from 'd3';
 import { useDimensions } from '../../../hooks/use-dimensions';
 import { AxisLeft } from '../Axes/AxisLeft';
 import { AxisBottom } from '../Axes/AxisBottom';
-import { Tooltip } from '../ui/Tooltip';
-import { SearchBar } from '../ui/SearchBar';
+import { Tooltip } from '../custom_ui/Tooltip';
+import { SearchBar } from '../custom_ui/SearchBar';
 
 const FONT_FAMILY = '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
 const COLORS = d3.schemeTableau10;
@@ -148,8 +148,6 @@ export const ScatterplotWithRegression = ({
     onModelTypesChange,
     selectedPredictorType = 'CHF_LCU',
     onPredictorChange,
-    paneWidth: externalPaneWidth,
-    onPaneWidthChange,
     onSwitchToLineChart,
     xDomain: externalXDomain,
     onXDomainChange: externalOnXDomainChange,
@@ -161,15 +159,7 @@ export const ScatterplotWithRegression = ({
     const setXDomain = externalOnXDomainChange !== undefined ? externalOnXDomainChange : (() => {});
     // Constants
     const MARGIN = { top: 80, right: 30, bottom: 70, left: 110 };
-    const GAP = 16;
-    const PANE_WIDTH = 200;
     const MOBILE_BREAKPOINT = 600;
-    const MIN_PANE_WIDTH = 150;
-    const MAX_PANE_WIDTH = 400;
-    
-    // Controlled pane width
-    const paneWidth = externalPaneWidth !== undefined ? externalPaneWidth : PANE_WIDTH;
-    const setPaneWidth = onPaneWidthChange !== undefined ? onPaneWidthChange : (() => {});
     const setSearchQuery = onSearchChange !== undefined ? onSearchChange : (() => {});
     const setSortBy = onSortChange !== undefined ? onSortChange : (() => {});
     const setSelectedCategories = onCategoriesChange !== undefined ? onCategoriesChange : (() => {});
@@ -180,20 +170,17 @@ export const ScatterplotWithRegression = ({
     // State
     const [hoveredIndex, setHoveredIndex] = useState(null);
     const [hoveredPoint, setHoveredPoint] = useState(null);
-    const [isResizing, setIsResizing] = useState(false);
+    const [isCollapsed, setIsCollapsed] = useState(false);
+    const [isChartHovered, setIsChartHovered] = useState(false);
     const [showCategoryDropdown, setShowCategoryDropdown] = useState(false);
     const [showModelDropdown, setShowModelDropdown] = useState(false);
     
     // Refs
     const containerRef = useRef(null);
     const metricListRef = useRef(null);
-    const isResizingRef = useRef(false);
-    
     // Responsive layout
     const isMobileLayout = width < MOBILE_BREAKPOINT;
-    const effectivePaneWidth = isMobileLayout ? 0 : paneWidth;
-    const effectiveGap = isMobileLayout ? 0 : GAP;
-    const availableWidth = width - effectivePaneWidth - effectiveGap;
+    const isPaneCollapsed = isMobileLayout || isCollapsed;
     
     // Square axis area calculation with height scaling
     const totalHorizontalMargin = MARGIN.left + MARGIN.right;
@@ -202,7 +189,10 @@ export const ScatterplotWithRegression = ({
     // const scale = 0.9; // Height scaling factor
     // const scale = width < 700 ? 1.2 : 0.8;
     const scale = window.innerWidth < 1300 ? 0.85 : 0.8;
-    const chartWidth = availableWidth * scale;
+    // Chart width: nearly full width when pane collapsed, scaled width when expanded
+    const chartWidth = isPaneCollapsed ? width * 0.8 : width * scale * 0.85;
+    // Button position: at right edge of container when collapsed, at chart right when expanded
+    const buttonLeft = isPaneCollapsed ? width - 40 : chartWidth;
     const chartHeight = chartWidth + marginDifference;
     const boundsWidth = chartWidth - totalHorizontalMargin;
     const boundsHeight = chartHeight - totalVerticalMargin;
@@ -498,44 +488,6 @@ export const ScatterplotWithRegression = ({
         setSelectedMetric(null);
     }, [setSelectedMetric]);
     
-    // Handle pane resize
-    const handleResize = useCallback((e) => {
-        if (!isResizingRef.current || !containerRef.current || isMobileLayout) return;
-        const rect = containerRef.current.getBoundingClientRect();
-        const clientX = e.touches ? e.touches[0].clientX : e.clientX;
-        const newWidth = rect.width - (clientX - rect.left);
-        const constrainedWidth = Math.max(MIN_PANE_WIDTH, Math.min(MAX_PANE_WIDTH, newWidth));
-        setPaneWidth(constrainedWidth);
-    }, [isMobileLayout, setPaneWidth]);
-    
-    const handleResizeEnd = useCallback(() => {
-        isResizingRef.current = false;
-        setIsResizing(false);
-        document.body.style.cursor = '';
-    }, []);
-    
-    const handleResizeStart = useCallback((e) => {
-        e.preventDefault();
-        isResizingRef.current = true;
-        setIsResizing(true);
-        document.body.style.cursor = 'col-resize';
-        document.addEventListener('mousemove', handleResize);
-        document.addEventListener('mouseup', handleResizeEnd);
-        document.addEventListener('touchmove', handleResize);
-        document.addEventListener('touchend', handleResizeEnd);
-    }, [handleResize, handleResizeEnd]);
-    
-    // Cleanup event listeners
-    useEffect(() => {
-        return () => {
-            document.removeEventListener('mousemove', handleResize);
-            document.removeEventListener('mouseup', handleResizeEnd);
-            document.removeEventListener('touchmove', handleResize);
-            document.removeEventListener('touchend', handleResizeEnd);
-            document.body.style.cursor = '';
-        };
-    }, [handleResize, handleResizeEnd]);
-    
     // Close dropdowns when clicking outside
     useEffect(() => {
         const handleClickOutside = (e) => {
@@ -576,9 +528,9 @@ export const ScatterplotWithRegression = ({
     }, [filteredSeriesKeys, selectedMetric, handleSelectMetric]);
 
     return (
-        <div ref={containerRef} className="flex flex-col md:flex-row relative" style={{ width, height: chartContainerHeight, fontFamily: FONT_FAMILY }}>
+        <div ref={containerRef} className="flex flex-col md:flex-row relative" style={{ width, height: chartContainerHeight, fontFamily: FONT_FAMILY, alignItems: 'flex-start', overflow: 'hidden' }}>
             {/* Chart Area */}
-            <div className="relative mr-8" style={{ width: chartWidth, height: chartContainerHeight }}>
+            <div className="relative" style={{ width: chartWidth, height: chartContainerHeight }}>
                 <svg
                     width={chartWidth}
                     height={chartHeight}
@@ -586,6 +538,13 @@ export const ScatterplotWithRegression = ({
                 >
                     {/* Chart Group - translated to account for margins */}
                     <g transform={`translate(${[MARGIN.left, MARGIN.top].join(",")})`}>
+                        <rect
+                            width={boundsWidth}
+                            height={boundsHeight}
+                            fill="transparent"
+                            onMouseEnter={() => setIsChartHovered(true)}
+                            onMouseLeave={() => setIsChartHovered(false)}
+                        />
                         {/* Title */}
                         {selectedMetric && (
                             <text
@@ -672,7 +631,7 @@ export const ScatterplotWithRegression = ({
                         {/* Scatter points */}
                         {scatterData.map((point, i) => {
                             const isHovered = hoveredIndex === i;
-                            const opacity = hoveredIndex === null ? 0.7 : (isHovered ? 1 : 0.2);
+                            const opacity = !isChartHovered ? 0.7 : (isHovered ? 1 : 0.2);
                             return (
                                 <circle
                                     key={i}
@@ -686,6 +645,7 @@ export const ScatterplotWithRegression = ({
                                     onMouseEnter={(e) => {
                                         const gdpLabel = selectedPredictorType === 'CHF_LCU' ? 'GDP (constant CHF)' : 'GDP (current USD)';
                                         setHoveredIndex(i);
+                                        setIsChartHovered(true);
                                         setHoveredPoint({
                                             xPos: MARGIN.left + xScale(point.x) - 150,
                                             yPos: MARGIN.top + yScale(point.y) - 10,
@@ -696,6 +656,7 @@ export const ScatterplotWithRegression = ({
                                     }}
                                     onMouseLeave={() => {
                                         setHoveredIndex(null);
+                                        setIsChartHovered(false);
                                         setHoveredPoint(null);
                                     }}
                                 />
@@ -703,7 +664,7 @@ export const ScatterplotWithRegression = ({
                         })}
                         
                         {/* Trajectory line (on hover) */}
-                        {hoveredIndex !== null && scatterData.length > 0 && (
+                        {(hoveredIndex !== null || isChartHovered) && scatterData.length > 0 && (
                             <path
                                 d={d3.line()
                                     .x(d => xScale(d.x))
@@ -711,7 +672,7 @@ export const ScatterplotWithRegression = ({
                                     ([...scatterData].sort((a, b) => a.year - b.year))}
                                 fill="none"
                                 stroke="#888"
-                                strokeWidth={1}
+                                strokeWidth={1.5}
                                 strokeDasharray="3,3"
                                 opacity={0.7}
                                 style={{ pointerEvents: 'none' }}
@@ -729,7 +690,7 @@ export const ScatterplotWithRegression = ({
                                 : Math.floor(sortedByYear.length / 2);
                             const median = sortedByYear[midIndex];
                             const pointsToLabel = [first, median, last];
-                            const labelFontSize = Math.max(8, width * 0.013);
+                            const labelFontSize = Math.max(8, width * 0.014);
                             const labelWidth = 25;
                             const labelHeight = labelFontSize + 4;
                             const pointRadius = 6;
@@ -823,6 +784,7 @@ export const ScatterplotWithRegression = ({
                                                 x={lp.x}
                                                 y={lp.y}
                                                 fontSize={labelFontSize}
+                                                fontWeight="bold"
                                                 textAnchor={lp.textAnchor}
                                                 fill="#333"
                                             >
@@ -861,24 +823,32 @@ export const ScatterplotWithRegression = ({
                 <Tooltip interactionData={hoveredPoint} />
             </div>
 
-            {/* Resizer handle - hidden on mobile */}
+            {/* Collapse/Expand button - hidden on mobile, positioned at right edge of chart or container */}
             {!isMobileLayout && (
-                <div
-                    className={`w-1 bg-gray-300 cursor-col-resize hover:bg-blue-400 active:bg-blue-500 transition-colors `}
-                    onMouseDown={handleResizeStart}
-                    onTouchStart={handleResizeStart}
-                    style={{ height: chartContainerHeight, marginTop: 0 }}
-                />
+                <button
+                    onClick={() => setIsCollapsed(!isCollapsed)}
+                    className="absolute w-8 h-8 bg-blue-500 hover:bg-blue-600 rounded-md shadow border border-blue-600 flex items-center justify-center transition-colors z-20 text-white"
+                    style={{
+                        left: buttonLeft,
+                        top: 16
+                    }}
+                    title={isCollapsed ? 'Expand pane' : 'Collapse pane'}
+                >
+                    {isCollapsed ? '←' : '→'}
+                </button>
             )}
 
             {/* Side Pane */}
-            <div 
-                className={`border-l border-gray-200 p-4 rounded-lg shadow-sm overflow-y-auto overflow-x-hidden ${isMobileLayout ? 'w-full order-first' : 'flex-1'}`}
-                style={{ 
-                    minWidth: `${paneWidth}px`,  // Minimum width from resizer
-                    height: isMobileLayout ? 'auto' : chartContainerHeight
-                }}
-            >
+            {!isPaneCollapsed && (
+                <div 
+                    className={`border-l border-gray-200 bg-[#f5f5f5ba]  p-4 rounded-lg shadow-sm ${isMobileLayout ? 'w-full pl-4 order-first overflow-y-auto overflow-x-hidden' : 'pl-10 overflow-y-auto overflow-x-hidden'}`}
+                    style={{ 
+                        flex: isMobileLayout ? undefined : '1',
+                        height: isMobileLayout ? 'auto' : chartContainerHeight,
+                        maxHeight: chartContainerHeight,
+                        transition: 'width 0.2s ease'
+                    }}
+                >
                 {/* Search Bar */}
                 <div className="mb-4">
                     <SearchBar
@@ -894,7 +864,7 @@ export const ScatterplotWithRegression = ({
                     <select
                         value={selectedPredictorType}
                         onChange={(e) => setSelectedPredictorType(e.target.value)}
-                        className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white"
                         style={{ fontFamily: FONT_FAMILY, fontSize: itemFontSize }}
                     >
                         <option value="CHF_LCU">GDP : CHF (constant)</option>
@@ -906,7 +876,7 @@ export const ScatterplotWithRegression = ({
                 <div className="mb-4 relative model-dropdown">
                     <button
                         onClick={() => setShowModelDropdown(!showModelDropdown)}
-                        className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent flex justify-between items-center"
+                        className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent flex justify-between items-center bg-white"
                         style={{ fontFamily: FONT_FAMILY, fontSize: itemFontSize }}
                     >
                         <span className="break-words text-left">{modelButtonText}</span>
@@ -929,7 +899,7 @@ export const ScatterplotWithRegression = ({
                                     type="checkbox"
                                     checked={selectedModelTypes.length === ALL_MODEL_TYPES.length && ALL_MODEL_TYPES.length > 0}
                                     readOnly
-                                    className="mr-2 h-4 w-4 pointer-events-none"
+                                    className="mr-2 h-4 w-4 pointer-events-none bg-white"
                                 />
                                 <span className="text-sm font-semibold">Select All</span>
                             </button>
@@ -946,7 +916,7 @@ export const ScatterplotWithRegression = ({
                                                 setSelectedModelTypes(selectedModelTypes.filter(m => m !== modelType));
                                             }
                                         }}
-                                        className="mr-2 h-4 w-4"
+                                        className="mr-2 h-4 w-4 bg-white"
                                     />
                                     <span className="text-sm">{modelType} ({modelTypeCounts[modelType] || 0})</span>
                                 </label>
@@ -959,7 +929,7 @@ export const ScatterplotWithRegression = ({
                 <div className="mb-4 relative category-dropdown">
                     <button
                         onClick={() => setShowCategoryDropdown(!showCategoryDropdown)}
-                        className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent flex justify-between items-center"
+                        className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent flex justify-between items-center bg-white"
                         style={{ fontFamily: FONT_FAMILY, fontSize: itemFontSize }}
                     >
                         <span className="break-words text-left">{categoryButtonText}</span>
@@ -982,7 +952,7 @@ export const ScatterplotWithRegression = ({
                                     type="checkbox"
                                     checked={selectedCategories.length === allCategories.length && allCategories.length > 0}
                                     readOnly
-                                    className="mr-2 h-4 w-4 pointer-events-none"
+                                    className="mr-2 h-4 w-4 pointer-events-none bg-white"
                                 />
                                 <span className="text-sm font-semibold">Select All</span>
                             </button>
@@ -999,7 +969,7 @@ export const ScatterplotWithRegression = ({
                                                 setSelectedCategories(selectedCategories.filter(c => c !== cat));
                                             }
                                         }}
-                                        className="mr-2 h-4 w-4"
+                                        className="mr-2 h-4 w-4 bg-white"
                                     />
                                     <span className="text-sm">{cat}</span>
                                 </label>
@@ -1013,7 +983,7 @@ export const ScatterplotWithRegression = ({
                     <select
                         value={sortBy}
                         onChange={(e) => setSortBy(e.target.value)}
-                        className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white"
                         style={{ fontFamily: FONT_FAMILY, fontSize: itemFontSize }}
                     >
                         <option value="alphabetical">Sort by: Name (A-Z)</option>
@@ -1068,10 +1038,10 @@ export const ScatterplotWithRegression = ({
                                     onClick={() => handleSelectMetric(key)}
                                 >
                                     <div 
-                                        className="w-4 h-4 rounded border-2 shrink-0"
+                                        className="w-4 h-4 rounded border-2 shrink-0 bg-white"
                                         style={{
                                             borderColor: color,
-                                            backgroundColor: isSelected ? color : 'transparent'
+                                            backgroundColor: isSelected ? color : 'white'
                                         }}
                                     />
                                     <span 
@@ -1105,6 +1075,7 @@ export const ScatterplotWithRegression = ({
                     </div>
                 )}
             </div>
+        )}
         </div>
     );
 };

@@ -4,7 +4,7 @@
 
 import { useState, useMemo, useRef } from 'react';
 import * as d3 from 'd3';
-import { Checkbox } from '@/components/ui/checkbox.tsx';
+import { Checkbox } from '@/components/custom_ui/Checkbox.jsx';
 import { AxisLeft } from '../../Axes/AxisLeft.jsx';
 import { AxisBottom } from '../../Axes/AxisBottom.jsx';
 import { useDimensions } from '../../../../hooks/use-dimensions.js';

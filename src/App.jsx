@@ -8,7 +8,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { ResponsiveScatterplotWithRegression } from './components/charts/ScatterplotWithRegression';
 import { ResponsiveLineChartWithMetrics } from './components/charts/LineChartWithMetrics';
 import { loadSwissMetrics, loadRegressionResults, loadMetricsByCategory, loadMetadata } from './lib/data-loader';
-import { Slider } from './components/ui/Slider';
+import { Slider } from './components/custom_ui/Slider';
 
 // Custom color scale for different categories
 import * as d3 from 'd3';
@@ -22,7 +22,6 @@ export default function App() {
     const [selectedCategories, setSelectedCategories] = useState([]);
     const [selectedModelTypes, setSelectedModelTypes] = useState([]);
     const [selectedPredictorType, setSelectedPredictorType] = useState('CHF_LCU');
-    const [paneWidth, setPaneWidth] = useState(200);
     const [metadata, setMetadata] = useState([]);
     // GDP range slider state for scatter plot
     const [xDomain, setXDomain] = useState(null);
@@ -248,8 +247,6 @@ export default function App() {
                             onModelTypesChange={setSelectedModelTypes}
                             selectedPredictorType={selectedPredictorType}
                             onPredictorChange={setSelectedPredictorType}
-                            paneWidth={paneWidth}
-                            onPaneWidthChange={setPaneWidth}
                             xDomain={xDomain}
                             onXDomainChange={setXDomain}
                             gdpRange={gdpRange}
@@ -275,8 +272,6 @@ export default function App() {
                             onModelTypesChange={setSelectedModelTypes}
                             selectedPredictorType={selectedPredictorType}
                             onPredictorChange={setSelectedPredictorType}
-                            paneWidth={paneWidth}
-                            onPaneWidthChange={setPaneWidth}
                             xAxisLabel="Year"
                             yAxisLabel="Metric Value"
                             title="Swiss Metrics Explorer"

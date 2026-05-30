@@ -18,7 +18,7 @@ export const SearchBar = forwardRef(({ value, onChange, placeholder = 'Search fo
             value={value}
             onChange={(e) => onChange(e.target.value)}
             placeholder={placeholder}
-            className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent placeholder:text-gray-400"
+            className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent placeholder:text-gray-400 bg-white"
             style={{
                 fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
             }}
