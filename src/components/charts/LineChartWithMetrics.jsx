@@ -744,6 +744,9 @@ export const LineChartWithMetrics = ({
                         maxHeight: chartContainerHeight
                     }}
                 >
+                <div className="mb-4 text-sm font-semibold text-gray-700" style={{ fontFamily: FONT_FAMILY, fontSize: itemFontSize*1 }}>
+                    Choose a metric from the metric list
+                </div>
                 {/* Search Bar */}
                 <div className="mb-4">
                     <div className="relative">
@@ -893,6 +896,8 @@ export const LineChartWithMetrics = ({
                         
                     </select>
                 </div>
+                
+                <hr className="mb-4 border-t-4 border-gray-300" />
                 
                 {/* Selection Info */}
                 <div className="mb-4 flex justify-between items-center">

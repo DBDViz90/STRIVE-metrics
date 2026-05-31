@@ -859,6 +859,9 @@ export const MultiMetricLineChart = ({
                         zIndex: 1  
                     }}
                 >
+                    <div className="mb-4 text-sm font-semibold text-gray-700" style={{ fontFamily: FONT_FAMILY, fontSize: itemFontSize*1 }}>
+                        Add/remove metrics from the metric list at the bottom
+                    </div>
                     {/* SECTION 1: Selection (N) with selected metrics list */}
                     <div className="mb-6">
                         <div className="flex justify-between items-center mb-2">
@@ -870,7 +873,7 @@ export const MultiMetricLineChart = ({
                                 className="px-3 py-1 text-xs bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors"
                                 style={{ fontFamily: FONT_FAMILY, fontSize: itemFontSize }}
                             >
-                                Clear
+                                Clear selection
                             </button>
                         </div>
                         <div className="border border-gray-200 rounded-md bg-white overflow-y-auto">
@@ -1056,6 +1059,8 @@ export const MultiMetricLineChart = ({
                         </div>
                     </div>
                     
+                    <hr className="mb-4 border-t-4 border-gray-300" /> 
+
                     {/* SECTION 3: Full Metric List with Checkboxes */}
                     <div className="space-y-1">
                         <div className="text-sm font-medium text-gray-700 mb-2" style={{ fontFamily: FONT_FAMILY, fontSize: itemFontSize }}>
