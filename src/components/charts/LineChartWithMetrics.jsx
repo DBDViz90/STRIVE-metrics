@@ -559,7 +559,7 @@ export const LineChartWithMetrics = ({
                                 const point = lineData[closestIndex];
                                 setHoveredIndex(closestIndex);
                                 setHoveredPoint({
-                                    xPos: MARGIN.left + xScale(point.year) - 155,
+                                    xPos: MARGIN.left + xScale(point.year) - 170,
                                     yPos: MARGIN.top + yScale(point.value) - 20,
                                     year: point.year,
                                     metricValue: `Metric value: ${formatValue(point.value)}`

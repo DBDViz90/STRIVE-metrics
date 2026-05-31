@@ -542,7 +542,7 @@ export const MultiMetricLineChart = ({
             xPos = e.clientX - svgRect.left + 10;
         } else {
             // Cursor on right side: align tooltip right edge slightly left of cursor
-            xPos = e.clientX - svgRect.left - tooltipWidth*1.3;
+            xPos = e.clientX - svgRect.left*1.25 - tooltipWidth;
         }
 
         // Y-position: center tooltip on cursor
