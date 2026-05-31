@@ -599,10 +599,10 @@ export const MultiMetricLineChart = ({
         let xPos;
         if (mouseX < boundsWidth / 2) {
             // Cursor on left side: align tooltip left edge slightly right of cursor
-            xPos = e.clientX - svgRect.left + 10;
+            xPos = e.clientX - svgRect.left*0.95;
         } else {
             // Cursor on right side: align tooltip right edge slightly left of cursor
-            xPos = e.clientX - svgRect.left*1.25 - tooltipWidth;
+            xPos = e.clientX - svgRect.left*0.9 - tooltipWidth*1.1;
         }
 
         // Y-position: center tooltip on cursor

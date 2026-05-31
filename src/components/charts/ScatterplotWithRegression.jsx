@@ -648,6 +648,8 @@ export const ScatterplotWithRegression = ({
                                         const svgRect = svgElement.getBoundingClientRect();
                                         const mouseX = e.clientX - svgRect.left - MARGIN.left;
                                         
+                                        console.log({mouseX, boundsWidth})
+
                                         // Clamp mouseX to bounds
                                         if (mouseX < 0 || mouseX > boundsWidth) {
                                             setHoveredPoint(null);
@@ -662,15 +664,17 @@ export const ScatterplotWithRegression = ({
                                         let xPos;
                                         if (mouseX < boundsWidth / 2) {
                                             // Cursor on left side: align tooltip left edge slightly right of cursor
-                                            xPos = e.clientX - svgRect.left + 10;
+                                            xPos = e.clientX - svgRect.left*0.95;
                                         } else {
                                             // Cursor on right side: align tooltip right edge slightly left of cursor
-                                            xPos = e.clientX - svgRect.left - tooltipWidth *0.8;
+                                            xPos = e.clientX - svgRect.left*0.55 - tooltipWidth;
                                         }
                                         
                                         // Y-position: center tooltip on cursor
                                         const yPos = e.clientY - svgRect.top - tooltipHeight / 2;
                                         
+                                        // console.log({xPos, yPos}) 
+
                                         setHoveredPoint({
                                             xPos: xPos,
                                             yPos: yPos,
