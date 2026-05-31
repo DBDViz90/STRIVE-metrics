@@ -11,12 +11,24 @@ import { AxisBottom } from '../Axes/AxisBottom';
 import { SearchBar } from '../custom_ui/SearchBar';
 import { Tooltip } from '../custom_ui/Tooltip';
 import { Slider } from '../custom_ui/Slider';
+import { Switch } from '../custom_ui/Switch';
 import { useDimensions } from '../../../hooks/use-dimensions';
 
 // Constants
 const FONT_FAMILY = '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
 const DEFAULT_GDP_METRIC = 'GDP_GDP_constant_LCU_WorldBank_per_capita';
 const COLORS = d3.schemeTableau10;
+
+// Economic crisis periods for Switzerland (band spans [start-1, end])
+const CRISIS_PERIODS = [
+    { start: 1975, end: 1976 },
+    { start: 1982, end: 1983 },
+    { start: 1991, end: 1996 },
+    { start: 2002, end: 2003 },
+    { start: 2009, end: 2009 },
+    { start: 2020, end: 2020 },
+    { start: 2023, end: 2024 },
+];
 
 // Sort options
 const SORT_OPTIONS = [
@@ -112,6 +124,9 @@ export const MultiMetricLineChart = ({
     
     // State for metric label hover (to dim other metrics)
     const [hoveredMetric, setHoveredMetric] = useState(null);
+    
+    // State for crisis bands visibility
+    const [showCrisisBands, setShowCrisisBands] = useState(true);
     
     // State for dropdown visibility
     const [showModelDropdown, setShowModelDropdown] = useState(false);
@@ -577,14 +592,16 @@ export const MultiMetricLineChart = ({
         // Use slider's baseline year for "% change since" label
         const startingYear = effectiveYearRange[0];
 
-        // Build metrics list with color info
-        const metricsList = selectedMetrics
+        // Build metrics list with color info, sorted by y-axis value (descending)
+        const sortedMetrics = [...selectedMetrics]
             .filter(m => yearData[m] !== undefined && yearData[m] !== null)
-            .map(m => ({
-                name: formatMetricName(m),
-                value: (yearData[m] >= 0 ? '+' : '') + yearData[m].toFixed(1) + '%',
-                color: getMetricColor(m)
-            }));
+            .sort((a, b) => yearData[b] - yearData[a]);
+        
+        const metricsList = sortedMetrics.map(m => ({
+            name: formatMetricName(m),
+            value: (yearData[m] >= 0 ? '+' : '') + yearData[m].toFixed(1) + '%',
+            color: getMetricColor(m)
+        }));
 
         if (metricsList.length === 0) {
             setTooltipData(null);
@@ -602,7 +619,7 @@ export const MultiMetricLineChart = ({
             xPos = e.clientX - svgRect.left*0.95;
         } else {
             // Cursor on right side: align tooltip right edge slightly left of cursor
-            xPos = e.clientX - svgRect.left*0.9 - tooltipWidth*1.1;
+            xPos = e.clientX - svgRect.left*1.3 - tooltipWidth*1.3;
         }
 
         // Y-position: center tooltip on cursor
@@ -734,7 +751,46 @@ export const MultiMetricLineChart = ({
                                 </text>
                             </>
                         )}
+
+                        {/* Crisis bands toggle switch - top left of chart bounds */}
+                        <foreignObject x={10} y={10} width={150} height={30} overflow="visible" >
+                            <div className="flex items-center gap-2" style={{ fontFamily: FONT_FAMILY, fontSize: itemFontSize }}>
+                                <Switch
+                                    checked={showCrisisBands}
+                                    onChange={setShowCrisisBands}
+                                    label="Crisis bands"
+                                />
+                            </div>
+                        </foreignObject>
                         
+                        {/* Crisis period highlight bands */}
+                        {showCrisisBands && CRISIS_PERIODS.map((period, idx) => {
+                            const bandStart = period.start - 1;
+                            const bandEnd = period.end;
+                            let x1 = xScale(bandStart);
+                            let x2 = xScale(bandEnd);
+                            
+                            // Clip to chart bounds
+                            x1 = Math.max(0, Math.min(x1, boundsWidth));
+                            x2 = Math.max(0, Math.min(x2, boundsWidth));
+                            const width = Math.max(0, x2 - x1);
+                            
+                            if (width === 0) return null;
+                            
+                            return (
+                                <rect
+                                    key={`crisis-band-${idx}`}
+                                    x={x1}
+                                    y={0}
+                                    width={width}
+                                    height={boundsHeight}
+                                    fill="rgba(255, 255, 0, 0.2)"
+                                    stroke="none"
+                                    style={{ pointerEvents: 'none' }}
+                                />
+                            );
+                        })}
+
                         {/* Lines for each selected metric */}
                         {selectedMetrics.map(metricName => {
                             const lineData = metricLineData[metricName];
@@ -900,7 +956,7 @@ export const MultiMetricLineChart = ({
                                     border: '1px solid #333',
                                     flexShrink: 0
                                 }} />
-                                <span style={{ color: '#333' }}>{metric.name}: {metric.value}</span>
+                                <span style={{ color: '#333' }}>{metric.name}: <strong>{metric.value}</strong></span>
                             </div>
                         ))}
                     </div>
