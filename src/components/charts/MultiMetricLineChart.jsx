@@ -10,6 +10,7 @@ import { AxisLeft } from '../Axes/AxisLeft';
 import { AxisBottom } from '../Axes/AxisBottom';
 import { SearchBar } from '../custom_ui/SearchBar';
 import { Tooltip } from '../custom_ui/Tooltip';
+import { Slider } from '../custom_ui/Slider';
 import { useDimensions } from '../../../hooks/use-dimensions';
 
 // Constants
@@ -115,6 +116,9 @@ export const MultiMetricLineChart = ({
     // State for dropdown visibility
     const [showModelDropdown, setShowModelDropdown] = useState(false);
     const [showCategoryDropdown, setShowCategoryDropdown] = useState(false);
+    
+    // State for year range slider
+    const [yearRange, setYearRange] = useState(null);
     
     // Ref for metric list scrolling
     const metricListRef = useRef(null);
@@ -380,21 +384,50 @@ export const MultiMetricLineChart = ({
     const itemFontSize = Math.max(11, width * 0.015);
     const tooltipFontSize = Math.max(11, width * 0.013);
     
-    // Get all years from chartData
-    const years = useMemo(() => {
+    // Calculate full year range from raw data (not filtered chartData)
+    const fullYearRange = useMemo(() => {
+        if (data.length === 0) return [1960, 2024];
+        const allYears = data.map(d => d.year).filter(y => y !== null && y !== undefined);
+        if (allYears.length === 0) return [1960, 2024];
+        return d3.extent(allYears);
+    }, [data]);
+
+    // Initialize yearRange when data changes
+    useEffect(() => {
+        if (fullYearRange && fullYearRange.length === 2) {
+            setYearRange(fullYearRange);
+        }
+    }, [fullYearRange]);
+
+    // Effective year range: use slider range if set, otherwise full range
+    const effectiveYearRange = useMemo(() => {
+        if (yearRange && yearRange.length === 2) {
+            return [Math.max(1960, yearRange[0]), Math.min(2024, yearRange[1])];
+        }
+        return fullYearRange;
+    }, [yearRange, fullYearRange]);
+
+    // Filter chartData based on effective year range
+    const filteredChartData = useMemo(() => {
         if (chartData.length === 0) return [];
-        return chartData.map(d => d.year).sort((a, b) => a - b);
-    }, [chartData]);
+        return chartData.filter(d => d.year >= effectiveYearRange[0] && d.year <= effectiveYearRange[1]);
+    }, [chartData, effectiveYearRange]);
+
+    // Get all years from filtered chartData
+    const years = useMemo(() => {
+        if (filteredChartData.length === 0) return [];
+        return filteredChartData.map(d => d.year).sort((a, b) => a - b);
+    }, [filteredChartData]);
     
-    // Get min/max % change across all selected metrics
+    // Get min/max % change across all selected metrics (from filtered data)
     const yDomain = useMemo(() => {
-        if (chartData.length === 0 || selectedMetrics.length === 0) return [0, 1];
+        if (filteredChartData.length === 0 || selectedMetrics.length === 0) return [0, 1];
         
         let minPercent = Infinity;
         let maxPercent = -Infinity;
         
         selectedMetrics.forEach(metricName => {
-            const metricValues = chartData
+            const metricValues = filteredChartData
                 .map(d => d[metricName] !== undefined ? d[metricName] : 0)
                 .filter(v => v !== null && v !== undefined);
             
@@ -420,7 +453,7 @@ export const MultiMetricLineChart = ({
         }
         
         return [minPercent - padding, maxPercent + padding];
-    }, [chartData, selectedMetrics]);
+    }, [filteredChartData, selectedMetrics]);
     
     // X and Y scales
     const xScale = useMemo(() => {
@@ -446,13 +479,13 @@ export const MultiMetricLineChart = ({
             .defined(d => d.value !== null && d.value !== undefined);
     }, [xScale, yScale]);
     
-    // Get line data for each selected metric
+    // Get line data for each selected metric (from filtered data)
     const metricLineData = useMemo(() => {
-        if (chartData.length === 0) return {};
+        if (filteredChartData.length === 0) return {};
         
         const result = {};
         selectedMetrics.forEach(metricName => {
-            const lineData = chartData
+            const lineData = filteredChartData
                 .map(d => ({ year: d.year, value: d[metricName] !== undefined ? d[metricName] : null }))
                 .filter(d => d.value !== null);
             if (lineData.length >= 2) {
@@ -460,7 +493,7 @@ export const MultiMetricLineChart = ({
             }
         });
         return result;
-    }, [chartData, selectedMetrics]);
+    }, [filteredChartData, selectedMetrics]);
     
     // Format function for y-axis
     const formatPercent = useCallback((value) => {
@@ -482,7 +515,7 @@ export const MultiMetricLineChart = ({
 
     // Mouse move handler for tooltip
     const handleMouseMove = useCallback((e) => {
-        if (!xScale || chartData.length === 0 || selectedMetrics.length === 0) {
+        if (!xScale || filteredChartData.length === 0 || selectedMetrics.length === 0) {
             setTooltipData(null);
             return;
         }
@@ -498,13 +531,13 @@ export const MultiMetricLineChart = ({
 
         // Find closest year
         const yearValue = xScale.invert(mouseX);
-        const allYears = [...new Set(chartData.map(d => d.year))].sort((a, b) => a - b);
+        const allYears = [...new Set(filteredChartData.map(d => d.year))].sort((a, b) => a - b);
         const closestYear = allYears.reduce((a, b) => 
             Math.abs(a - yearValue) < Math.abs(b - yearValue) ? a : b
         );
 
         // Get data for this year
-        const yearData = chartData.find(d => d.year === closestYear);
+        const yearData = filteredChartData.find(d => d.year === closestYear);
         if (!yearData) {
             setTooltipData(null);
             return;
@@ -556,7 +589,7 @@ export const MultiMetricLineChart = ({
             metrics: metricsList
         });
         setHoveredYear(closestYear);
-    }, [xScale, boundsWidth, chartData, selectedMetrics, formatValue, getMetricColor, MARGIN]);
+    }, [xScale, boundsWidth, filteredChartData, selectedMetrics, formatValue, getMetricColor, MARGIN]);
 
     // Mouse leave handler
     const handleMouseLeave = useCallback(() => {
@@ -620,7 +653,8 @@ export const MultiMetricLineChart = ({
     }, [metricLineData, boundsWidth, yScale]);
     
     return (
-        <div ref={containerRef} className="flex flex-col md:flex-row relative gap-6" style={{ width, height: chartContainerHeight, fontFamily: FONT_FAMILY, alignItems: 'flex-start', overflow: 'hidden' }}>
+        <>
+            <div ref={containerRef} className="flex flex-col md:flex-row relative gap-6" style={{ width, height: chartContainerHeight, fontFamily: FONT_FAMILY, alignItems: 'flex-start', overflow: 'hidden' }}>
             {/* Collapse/Expand Button */}
             {!isMobileLayout && (
                 <button
@@ -748,7 +782,7 @@ export const MultiMetricLineChart = ({
                         })}
                         
                         {/* Vertical hover line */}
-                        {hoveredYear !== null && chartData.some(d => d.year === hoveredYear) && (
+                        {hoveredYear !== null && filteredChartData.some(d => d.year === hoveredYear) && (
                             <line
                                 x1={xScale(hoveredYear)}
                                 y1={0}
@@ -846,9 +880,9 @@ export const MultiMetricLineChart = ({
                 )}
                 
             </div>
-            
+          
             {/* Side Pane */}
-            {!isPaneCollapsedState && (
+        {!isPaneCollapsedState && (
                 <div 
                     className={`border-l border-gray-200 bg-[#f5f5f5] p-4 rounded-lg shadow-sm ${isMobileLayout ? 'w-full pl-4 order-first overflow-y-auto overflow-x-hidden' : 'pl-3 overflow-y-auto overflow-x-hidden'}`}
                     style={{
@@ -1113,7 +1147,27 @@ export const MultiMetricLineChart = ({
                     </div>
                 </div>
             )}
-        </div>
+        </div> {/* THIS CLOSING DIV IS THE CLOSING DIV OF THE FLEX CONTAINER */} 
+
+        {/* Year Range Slider */}
+        <div className="pt-1 pb-4 mt-0 px-2 flex items-center gap-4 rounded-lg shadow-sm w-full">
+            <Slider
+                value={yearRange || fullYearRange}
+                min={fullYearRange[0]}
+                max={fullYearRange[1]}
+                onChange={setYearRange}
+                label="Year range"
+                unit=""
+            />
+            <button
+                onClick={() => setYearRange(fullYearRange)}
+                className="px-3 py-1 text-xs bg-gray-100 rounded hover:bg-gray-200 transition-colors whitespace-nowrap"
+            >
+                Reset range
+            </button>
+        </div> {/* THIS DIV IS THE CLOSING DIV OF THE YEAR RANGE SLIDER */} 
+
+        </>
     );
 };
 
