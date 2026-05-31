@@ -351,7 +351,7 @@ export const MultiMetricLineChart = ({
     const chartContainerHeight = isMobileLayout ? chartHeight + 100 : chartHeight;
     
     // Font sizes based on width (matching ScatterplotWithRegression)
-    const titleFontSize = Math.max(14, width * 0.022);
+    const titleFontSize = Math.max(14, width * 0.02);
     const axisLabelFontSize = Math.max(10, width * 0.017);
     const tickFontSize = Math.max(8, width * 0.015);
     const itemFontSize = Math.max(11, width * 0.015);
@@ -732,7 +732,7 @@ export const MultiMetricLineChart = ({
                             <>
                                 <text
                                     x={boundsWidth / 2}
-                                    y={-MARGIN.top / 2}
+                                    y={-MARGIN.top / 2 * 1.3}
                                     fontSize={titleFontSize}
                                     textAnchor="middle"
                                     fill="#333"
@@ -742,12 +742,22 @@ export const MultiMetricLineChart = ({
                                 </text>
                                 <text
                                     x={boundsWidth / 2}
-                                    y={-MARGIN.top / 2 + titleFontSize + 4}
-                                    fontSize={Math.max(12, width * 0.018)}
+                                    y={-MARGIN.top / 2 + titleFontSize*0.45}
+                                    fontSize={titleFontSize*0.7}
                                     textAnchor="middle"
                                     fill="#666"
                                 >
-                                    % change in selected metrics since: {yearRange ? Math.round(yearRange[0]) : '...'}, Switzerland
+                                    % change in selected metrics since: <tspan fill="blue" fontWeight="bold">{yearRange ? Math.round(yearRange[0]) : '...'}</tspan>, Switzerland
+                                </text>
+                                <text
+                                    x={boundsWidth / 2}
+                                    y={-MARGIN.top / 2 + titleFontSize*1.3}
+                                    fontSize={titleFontSize*0.5}
+                                    fontStyle="italic"
+                                    textAnchor="middle"
+                                    fill="#666"
+                                >
+                                    with critical economic events highlighted in yellow
                                 </text>
                             </>
                         )}

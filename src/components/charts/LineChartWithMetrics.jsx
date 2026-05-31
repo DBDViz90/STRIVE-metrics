@@ -10,10 +10,22 @@ import { AxisBottom } from '../Axes/AxisBottom';
 import { Slider } from '../custom_ui/Slider';
 import { SearchBar } from '../custom_ui/SearchBar';
 import { Tooltip } from '../custom_ui/Tooltip';
+import { Switch } from '../custom_ui/Switch';
 import { useDimensions } from '../../../hooks/use-dimensions';
 
 const FONT_FAMILY = '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
 const COLORS = d3.schemeTableau10;
+
+// Economic crisis periods for Switzerland (band spans [start-1, end])
+const CRISIS_PERIODS = [
+    { start: 1975, end: 1976 },
+    { start: 1982, end: 1983 },
+    { start: 1991, end: 1996 },
+    { start: 2002, end: 2003 },
+    { start: 2009, end: 2009 },
+    { start: 2020, end: 2020 },
+    { start: 2023, end: 2024 },
+];
 
 // Category colors for consistent styling.
 const CATEGORY_COLORS = {
@@ -167,6 +179,7 @@ export const LineChartWithMetrics = ({
     const [showModelDropdown, setShowModelDropdown] = useState(false);
     const [hoveredIndex, setHoveredIndex] = useState(null);
     const [hoveredPoint, setHoveredPoint] = useState(null);
+    const [showCrisisBands, setShowCrisisBands] = useState(false);
     
     // Constants
     const MOBILE_BREAKPOINT = 608;
@@ -611,6 +624,17 @@ export const LineChartWithMetrics = ({
                             </text>
                         )}
 
+                        {/* Crisis bands toggle switch - top left */}
+                        <foreignObject x={10} y={10} width={150} height={30} overflow="visible">
+                            <div className="flex items-center gap-2" style={{ fontFamily: FONT_FAMILY, fontSize: itemFontSize }}>
+                                <Switch
+                                    checked={showCrisisBands}
+                                    onChange={setShowCrisisBands}
+                                    label="Crisis bands"
+                                />
+                            </div>
+                        </foreignObject>
+
                         {/* Regression info */}
                         {regressionForMetric && selectedMetric && (
                             <text
@@ -650,6 +674,34 @@ export const LineChartWithMetrics = ({
                             </text>
                         )}
                         
+
+                        {/* Crisis period highlight bands */}
+                        {showCrisisBands && CRISIS_PERIODS.map((period, idx) => {
+                            const bandStart = period.start - 1;
+                            const bandEnd = period.end;
+                            let x1 = xScale(bandStart);
+                            let x2 = xScale(bandEnd);
+                            
+                            // Clip to chart bounds
+                            x1 = Math.max(0, Math.min(x1, boundsWidth));
+                            x2 = Math.max(0, Math.min(x2, boundsWidth));
+                            const width = Math.max(0, x2 - x1);
+                            
+                            if (width === 0) return null;
+                            
+                            return (
+                                <rect
+                                    key={`crisis-band-${idx}`}
+                                    x={x1}
+                                    y={0}
+                                    width={width}
+                                    height={boundsHeight}
+                                    fill="rgba(255, 255, 0, 0.2)"
+                                    stroke="none"
+                                    style={{ pointerEvents: 'none' }}
+                                />
+                            );
+                        })}
 
                         {/* Line chart */}
                         {lineData.length > 0 && (
