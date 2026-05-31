@@ -55,21 +55,23 @@ export default function App() {
         return [minY || 1960, maxY || 2024];
     }, [metricsData.data]);
 
-    // Auto-update xDomain when metric or predictor changes
+    // Auto-update xDomain when metric or predictor changes (only for scatter chart)
     useEffect(() => {
-        if (selectedMetric) {
-            const gdpKey = selectedPredictorType === 'CHF_LCU' ? 'gdp_lcu' : 'gdp_usd';
-            const metricData = metricsData.data.filter(d => d[selectedMetric] !== null && d[selectedMetric] !== undefined);
-            const metricX = metricData.map(d => d[gdpKey]).filter(x => x != null);
-            if (metricX.length > 0) {
-                setXDomain(d3.extent(metricX));
+        if (chartType === 'scatter') {
+            if (selectedMetric) {
+                const gdpKey = selectedPredictorType === 'CHF_LCU' ? 'gdp_lcu' : 'gdp_usd';
+                const metricData = metricsData.data.filter(d => d[selectedMetric] !== null && d[selectedMetric] !== undefined);
+                const metricX = metricData.map(d => d[gdpKey]).filter(x => x != null);
+                if (metricX.length > 0) {
+                    setXDomain(d3.extent(metricX));
+                } else {
+                    setXDomain(gdpRange);
+                }
             } else {
                 setXDomain(gdpRange);
             }
-        } else {
-            setXDomain(gdpRange);
         }
-    }, [selectedMetric, metricsData.data, gdpRange, selectedPredictorType]);
+    }, [chartType, selectedMetric, metricsData.data, gdpRange, selectedPredictorType]);
 
     // Auto-update yearDomain for line chart when metric changes
     useEffect(() => {
