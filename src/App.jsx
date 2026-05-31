@@ -57,7 +57,7 @@ export default function App() {
 
     // Auto-update xDomain when metric or predictor changes (only for scatter chart)
     useEffect(() => {
-        if (chartType === 'scatter') {
+        if (chartType === 'scatter' && analysisMode === 'single') {
             if (selectedMetric) {
                 const gdpKey = selectedPredictorType === 'CHF_LCU' ? 'gdp_lcu' : 'gdp_usd';
                 const metricData = metricsData.data.filter(d => d[selectedMetric] !== null && d[selectedMetric] !== undefined);
@@ -71,11 +71,11 @@ export default function App() {
                 setXDomain(gdpRange);
             }
         }
-    }, [chartType, selectedMetric, metricsData.data, gdpRange, selectedPredictorType]);
+    }, [chartType, selectedMetric, metricsData.data, gdpRange, selectedPredictorType, analysisMode]);
 
     // Auto-update yearDomain for line chart when metric changes
     useEffect(() => {
-        if (chartType === 'line') {
+        if (chartType === 'line' && analysisMode === 'single') {
             if (yearDomain === null || yearDomain[0] === undefined || yearDomain[1] === undefined || yearDomain.length !== 2) {
                 // Initialize to full data range, clamped to [1960, 2024]
                 const allYears = metricsData.data.map(d => d.year).filter(y => y !== null && y !== undefined);
@@ -105,7 +105,7 @@ export default function App() {
                 setYearDomain([1960, 2024]);
             }
         }
-    }, [chartType, selectedMetric, metricsData.data]);
+    }, [chartType, selectedMetric, metricsData.data, analysisMode]);
 
     // Load all data on mount
     useEffect(() => {
