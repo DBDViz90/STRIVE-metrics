@@ -202,11 +202,11 @@ export default function App() {
             </header>
 
             {/* Analysis Mode Toggle */}
-            <div className="w-[60vw] mx-auto px-4 sm:px-6 lg:px-8 py-2"> 
+            <div className="w-[60vw] ml-72 px-0 sm:px-6 lg:px-0 py-0"> 
                 <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-2 flex gap-2">
                     <button
                         onClick={() => setAnalysisMode('single')}
-                        className={`px-4 py-2 text-md font-medium rounded transition-colors ${
+                        className={`px-4 py-2 text-md font-medium rounded transition-colors border-2 border-blue-500 ${
                             analysisMode === 'single' 
                                 ? 'bg-blue-500 text-white' 
                                 : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
@@ -216,7 +216,7 @@ export default function App() {
                     </button>
                     <button
                         onClick={() => setAnalysisMode('multi')}
-                        className={`px-4 py-2 text-md font-medium rounded transition-colors ${
+                        className={`ml-35 px-4 py-2 text-md font-medium rounded transition-colors border-2 border-blue-500 ${
                             analysisMode === 'multi' 
                                 ? 'bg-blue-500 text-white' 
                                 : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
@@ -230,26 +230,26 @@ export default function App() {
             {/* Chart Type Toggle - Only shown in single mode */}
             {analysisMode === 'single' && (
                 <div className="w-[60vw] mx-auto px-4 sm:px-6 lg:px-8 py-2"> 
-                    <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-2 flex gap-2">
+                    <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-2 flex gap-2 items-center ">
                         <button
                             onClick={() => setChartType('scatter')}
-                        className={`px-4 py-2 text-md font-medium rounded transition-colors ${
+                        className={`px-4 py-1 text-sm leading-tight font-medium rounded transition-colors border-2 border-cyan-300 ${
                             chartType === 'scatter' 
-                                ? 'bg-cyan-500 text-white' 
+                                ? 'bg-cyan-300 text-gray-700 ' 
                                 : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                         }`}
                     >
-                        Scatter plot regression (Metric vs GDP)
+                        Scatter plot regression <br/>(Metric vs GDP)
                     </button>
                     <button
                         onClick={() => setChartType('line')}
-                        className={`px-4 py-2 text-md font-medium rounded transition-colors ${
+                        className={`px-4 py-1 text-sm font-medium leading-tight rounded transition-colors border-2 border-cyan-300 ${
                             chartType === 'line' 
-                                ? 'bg-cyan-500 text-white' 
+                                ? 'bg-cyan-300 text-gray-700 ' 
                                 : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                         }`}
                     >
-                        Line chart (Metric yearly value)
+                        Line chart <br/>(Metric yearly value)
                     </button>
                 </div>
             </div>

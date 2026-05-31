@@ -264,49 +264,7 @@ export const MultiMetricLineChart = ({
         return [...gdpInList, ...regularMetrics];
     }, [seriesKeys, searchQuery, selectedCategories, selectedModelTypes, matchesModelFilter, sortBy, data]);
     
-    // Get data for selected metrics with % change calculation
-    const chartData = useMemo(() => {
-        if (selectedMetrics.length === 0) return [];
-        
-        // Group data by year
-        const dataByYear = {};
-        data.forEach(d => {
-            if (!dataByYear[d.year]) {
-                dataByYear[d.year] = { year: d.year };
-            }
-        });
-        
-        // For each selected metric, calculate % change from first available year
-        selectedMetrics.forEach(metricName => {
-            // Get all data points for this metric
-            const metricData = data
-                .filter(d => d[metricName] !== undefined && d[metricName] !== null)
-                .sort((a, b) => a.year - b.year);
-            
-            if (metricData.length === 0) return;
-            
-            const firstValue = metricData[0][metricName];
-            
-            metricData.forEach(d => {
-                const year = d.year;
-                if (!dataByYear[year]) {
-                    dataByYear[year] = { year };
-                }
-                
-                const value = d[metricName];
-                if (firstValue !== 0 && firstValue !== undefined && value !== undefined && value !== null) {
-                    const percentChange = ((value - firstValue) / Math.abs(firstValue)) * 100;
-                    dataByYear[year][metricName] = percentChange;
-                } else {
-                    dataByYear[year][metricName] = 0;
-                }
-            });
-        });
-        
-        // Convert to array and sort by year
-        const result = Object.values(dataByYear).sort((a, b) => a.year - b.year);
-        return result;
-    }, [selectedMetrics, data]);
+
     
 
     
@@ -368,7 +326,7 @@ export const MultiMetricLineChart = ({
     const scale = window.innerWidth < 1300 ? 0.85 : 0.8;
     
     // Chart sizing (matching ScatterplotWithRegression)
-    const chartWidth = isPaneCollapsedState ? width * 0.8 : width * scale * 0.9;
+    const chartWidth = isPaneCollapsedState ? width * 0.8 : width * scale * 0.85;
     const totalHorizontalMargin = MARGIN.left + MARGIN.right;
     const totalVerticalMargin = MARGIN.top + MARGIN.bottom;
     const marginDifference = totalVerticalMargin - totalHorizontalMargin;
@@ -392,6 +350,12 @@ export const MultiMetricLineChart = ({
         return d3.extent(allYears);
     }, [data]);
 
+    useEffect(() => {
+    if (yearRange === null && fullYearRange) {
+        setYearRange(fullYearRange);
+    }
+    }, [fullYearRange]);
+
     // Initialize yearRange when data changes
     useEffect(() => {
         if (fullYearRange && fullYearRange.length === 2) {
@@ -406,6 +370,73 @@ export const MultiMetricLineChart = ({
         }
         return fullYearRange;
     }, [yearRange, fullYearRange]);
+
+    // Get data for selected metrics with % change calculation
+    const chartData = useMemo(() => {
+        if (selectedMetrics.length === 0) return [];
+        
+        const baselineYear = effectiveYearRange[0];
+        
+        // Group data by year
+        const dataByYear = {};
+        data.forEach(d => {
+            if (!dataByYear[d.year]) {
+                dataByYear[d.year] = { year: d.year };
+            }
+        });
+        
+        // For each selected metric, calculate % change from baselineYear
+        selectedMetrics.forEach(metricName => {
+            // Get all data points for this metric
+            const metricData = data
+                .filter(d => d[metricName] !== undefined && d[metricName] !== null)
+                .sort((a, b) => a.year - b.year);
+            
+            if (metricData.length === 0) return;
+            
+            // Find baseline value at or closest to baselineYear
+            let baselineValue = null;
+            
+            // Try exact match first
+            const exactMatch = metricData.find(d => d.year === baselineYear);
+            if (exactMatch) {
+                baselineValue = exactMatch[metricName];
+            } else {
+                // Find closest year with data that is <= baselineYear
+                const yearsBeforeOrAt = metricData.filter(d => d.year <= baselineYear);
+                if (yearsBeforeOrAt.length > 0) {
+                    baselineValue = yearsBeforeOrAt[yearsBeforeOrAt.length - 1][metricName];
+                } else {
+                    // No data before baselineYear, use first available
+                    baselineValue = metricData[0][metricName];
+                }
+            }
+            
+            // Fallback to first value if still null/undefined
+            if (baselineValue === null || baselineValue === undefined) {
+                baselineValue = metricData[0][metricName];
+            }
+            
+            metricData.forEach(d => {
+                const year = d.year;
+                if (!dataByYear[year]) {
+                    dataByYear[year] = { year };
+                }
+                
+                const value = d[metricName];
+                if (baselineValue !== 0 && baselineValue !== undefined && value !== undefined && value !== null) {
+                    const percentChange = ((value - baselineValue) / Math.abs(baselineValue)) * 100;
+                    dataByYear[year][metricName] = percentChange;
+                } else {
+                    dataByYear[year][metricName] = 0;
+                }
+            });
+        });
+        
+        // Convert to array and sort by year
+        const result = Object.values(dataByYear).sort((a, b) => a.year - b.year);
+        return result;
+    }, [selectedMetrics, data, effectiveYearRange]);
 
     // Filter chartData based on effective year range
     const filteredChartData = useMemo(() => {
@@ -543,12 +574,8 @@ export const MultiMetricLineChart = ({
             return;
         }
 
-        // Find earliest year among all selected metrics for "% change since" label
-        const firstYears = selectedMetrics.map(m => {
-            const metricData = data.filter(d => d[m] !== undefined && d[m] !== null);
-            return metricData.length > 0 ? metricData[0].year : null;
-        }).filter(y => y !== null);
-        const startingYear = firstYears.length > 0 ? Math.min(...firstYears) : closestYear;
+        // Use slider's baseline year for "% change since" label
+        const startingYear = effectiveYearRange[0];
 
         // Build metrics list with color info
         const metricsList = selectedMetrics
@@ -703,7 +730,7 @@ export const MultiMetricLineChart = ({
                                     textAnchor="middle"
                                     fill="#666"
                                 >
-                                    % change in selected metrics starting year, Switzerland
+                                    % change in selected metrics since: {yearRange ? Math.round(yearRange[0]) : '...'}, Switzerland
                                 </text>
                             </>
                         )}
@@ -861,7 +888,7 @@ export const MultiMetricLineChart = ({
                         <div style={{ backgroundColor: '#f0f0f0', padding: '2px 6px' }}>
                             {tooltipData.year}
                             <div style={{ fontSize: tooltipFontSize * 0.9, color: '#666', marginTop: '1px' }}>
-                                % change since {tooltipData.startingYear}
+                                % change since {yearRange ? Math.round(yearRange[0]) : '...'}
                             </div>
                         </div>
                         {tooltipData.metrics.map((metric, idx) => (
@@ -904,8 +931,8 @@ export const MultiMetricLineChart = ({
                             </span>
                             <button
                                 onClick={clearAllSelections}
-                                className="px-3 py-1 text-xs bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors"
-                                style={{ fontFamily: FONT_FAMILY, fontSize: itemFontSize }}
+                                className="px-1 py-1 text-xs bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors"
+                                style={{ fontFamily: FONT_FAMILY, fontSize: itemFontSize*0.9 }}
                             >
                                 Clear selection
                             </button>

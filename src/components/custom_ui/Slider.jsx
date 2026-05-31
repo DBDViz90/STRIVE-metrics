@@ -23,6 +23,9 @@ export const Slider = ({ value, min, max, onChange, label = 'Year', unit = '$USD
     const containerRef = useRef(null);
     const minHandleRef = useRef(null);
     const maxHandleRef = useRef(null);
+    // Track current dragged values for snapping on release
+    const currentMinRef = useRef(value[0]);
+    const currentMaxRef = useRef(value[1]);
 
     // Convert value to percentage for positioning
     const toPercent = useCallback((val) => {
@@ -57,15 +60,17 @@ export const Slider = ({ value, min, max, onChange, label = 'Year', unit = '$USD
         const newValue = toValue(clampedPercent);
 
         if (dragHandleRef.current === 'min') {
-            const newMin = Math.min(newValue, value[1]);
-            onChange([newMin, value[1]]);
+            const newMin = Math.min(newValue, currentMaxRef.current);
+            currentMinRef.current = newMin;
+            onChange([newMin, currentMaxRef.current]);
         } else if (dragHandleRef.current === 'max') {
-            const newMax = Math.max(newValue, value[0]);
-            onChange([value[0], newMax]);
+            const newMax = Math.max(newValue, currentMinRef.current);
+            currentMaxRef.current = newMax;
+            onChange([currentMinRef.current, newMax]);
         }
-    }, [value, onChange, toValue]);
+    }, [onChange, toValue]);
 
-    // Handle drag end
+    // Handle drag end - snap to integers for year values
     const handleDragEnd = useCallback(() => {
         dragHandleRef.current = null;
         setIsDragging(null);
@@ -73,7 +78,10 @@ export const Slider = ({ value, min, max, onChange, label = 'Year', unit = '$USD
         document.removeEventListener('mouseup', handleDragEnd);
         document.removeEventListener('touchmove', handleDrag);
         document.removeEventListener('touchend', handleDragEnd);
-    }, [handleDrag]);
+        
+        // Snap to integers on release for clean year values
+        onChange([Math.round(currentMinRef.current), Math.round(currentMaxRef.current)]);
+    }, [handleDrag, onChange]);
 
     // Prevent handle overlap
     useEffect(() => {
@@ -81,6 +89,12 @@ export const Slider = ({ value, min, max, onChange, label = 'Year', unit = '$USD
             onChange([value[1], value[0]]);
         }
     }, [value, onChange]);
+
+    // Update refs when value prop changes (e.g., from external reset)
+    useEffect(() => {
+        currentMinRef.current = value[0];
+        currentMaxRef.current = value[1];
+    }, [value]);
 
     const minPercent = toPercent(value[0]);
     const maxPercent = toPercent(value[1]);
@@ -103,14 +117,14 @@ export const Slider = ({ value, min, max, onChange, label = 'Year', unit = '$USD
                     const rect = e.currentTarget.getBoundingClientRect();
                     const clickX = e.clientX - rect.left;
                     const percent = (clickX / rect.width) * 100;
-                    const newValue = toValue(percent);
+                    const newValue = Math.round(toValue(percent));
                     
                     // Click closer to min or max?
                     const midPoint = toPercent((value[0] + value[1]) / 2);
                     if (percent < midPoint) {
-                        onChange([newValue, value[1]]);
+                        onChange([newValue, Math.round(value[1])]);
                     } else {
-                        onChange([value[0], newValue]);
+                        onChange([Math.round(value[0]), newValue]);
                     }
                 }}
             >
