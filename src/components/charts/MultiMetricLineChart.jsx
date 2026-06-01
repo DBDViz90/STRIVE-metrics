@@ -359,7 +359,7 @@ export const MultiMetricLineChart = ({
     const axisLabelFontSize = Math.max(10, width * 0.017);
     const tickFontSize = Math.max(8, width * 0.015);
     const itemFontSize = Math.max(11, width * 0.015);
-    const tooltipFontSize = Math.max(9, width * 0.011);
+    const tooltipFontSize = Math.max(9, width * 0.0115);
     
     // Calculate full year range from raw data (not filtered chartData)
     const fullYearRange = useMemo(() => {
@@ -970,7 +970,7 @@ export const MultiMetricLineChart = ({
                 {tooltipData && (
                     <div
                         ref={tooltipRef}
-                        className="tooltip"
+                        className="tooltip xl:text"
                         // In tooltip div style (around line 946):
                         // In tooltip div style (around line 946):
                         style={{
@@ -989,9 +989,9 @@ export const MultiMetricLineChart = ({
                             maxWidth: '350px'  // Constraint for wrapping at both edges
                         }}
                     >
-                        <div style={{ backgroundColor: '#f0f0f0', padding: '2px 6px' }}>
+                        <div className="xl:text-xs 2xl:text-xs"style={{ backgroundColor: '#f0f0f0', padding: '2px 6px'}}>
                             {tooltipData.year}
-                            <div style={{ fontSize: tooltipFontSize * 0.9, color: '#666', marginTop: '1px' }}>
+                            <div className="xl:text-xs 2xl:text-xs" style={{  color: '#666', marginTop: '1px' }}>
                                 % change since <span style={{ color: 'blue', fontWeight: 'bold' }}>{yearRange ? Math.round(yearRange[0]) : '...'}</span>
                             </div>
                         </div>

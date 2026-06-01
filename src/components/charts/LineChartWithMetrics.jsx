@@ -654,7 +654,7 @@ export const LineChartWithMetrics = ({
                         {regressionForMetric && selectedMetric && (
                             <text
                                 x={chartWidth / 3}
-                                y={titleFontSize*0.1}
+                                y={titleFontSize-25}
                                 fontSize={Math.max(12, width * 0.018)}
                                 textAnchor="middle"
                                 fill="#666"
