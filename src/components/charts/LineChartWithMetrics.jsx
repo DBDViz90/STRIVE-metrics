@@ -13,6 +13,7 @@ import { Tooltip } from '../custom_ui/Tooltip';
 import { ArrowLeftFromLine, ArrowRightFromLine } from 'lucide-react';
 import { Switch } from '../custom_ui/Switch';
 import { useDimensions } from '../../../hooks/use-dimensions';
+import { getTooltipOffsets } from '../../lib/utils';
 
 const FONT_FAMILY = '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
 const COLORS = d3.schemeTableau10;
@@ -217,8 +218,6 @@ export const LineChartWithMetrics = ({
     const tickFontSize = Math.max(8, width * 0.015);
     const itemFontSize = Math.max(11, width * 0.015);
     
-
-    
     // Close dropdowns when clicking outside
     useEffect(() => {
         const handleClickOutside = (e) => {
@@ -351,7 +350,7 @@ export const LineChartWithMetrics = ({
     // Text for model filter button
     const modelButtonText = useMemo(() => {
         if (selectedModelTypes.length === 0) return "None";
-        if (selectedModelTypes.length === allModelTypes.length) return "Filter by model type";
+        if (selectedModelTypes.length === allModelTypes.length) return "Filter by regression model";
         return selectedModelTypes.map(mt => `${mt} (${modelTypeCounts[mt] || 0})`).join(", ");
     }, [selectedModelTypes, allModelTypes, modelTypeCounts]);
 
@@ -558,7 +557,7 @@ export const LineChartWithMetrics = ({
                             // Get mouse position relative to the g element (which is at MARGIN.left, MARGIN.top within SVG)
                             const mouseX = e.clientX - svgRect.left - MARGIN.left;
                             const mouseY = e.clientY - svgRect.top - MARGIN.top;
-                            
+
                             // Clamp to bounds to avoid errors
                             if (mouseX < 0 || mouseX > boundsWidth || mouseY < 0 || mouseY > boundsHeight) {
                                 setHoveredIndex(null);
@@ -569,12 +568,27 @@ export const LineChartWithMetrics = ({
                             // Find closest point using Voronoi
                             const closestIndex = voronoiDiagram.find(mouseX, mouseY);
                             
+                            // Tooltip dimensions and responsive offsets
+                            const tooltipWidth = 300;
+                            const tooltipHeight = 40;
+                            const { leftOffset, rightOffset } = getTooltipOffsets('line');
+                            
+                            // Calculate xPos based on cursor position (same as ScatterplotWithRegression)
+                            let xPos;
+                            if (mouseX < boundsWidth / 2) {
+                                xPos = e.clientX - svgRect.left * leftOffset;
+                            } else {
+                                xPos = e.clientX - svgRect.left * rightOffset - tooltipWidth;
+                            }
+                            
+                            const yPos = e.clientY - svgRect.top - tooltipHeight / 2;
+                            
                             if (closestIndex !== null && closestIndex >= 0 && closestIndex < lineData.length) {
                                 const point = lineData[closestIndex];
                                 setHoveredIndex(closestIndex);
                                 setHoveredPoint({
-                                    xPos: MARGIN.left + xScale(point.year) - 170,
-                                    yPos: MARGIN.top + yScale(point.value) - 20,
+                                    xPos,
+                                    yPos,
                                     year: point.year,
                                     metricValue: `Metric value: ${formatValue(point.value)}`
                                 });
@@ -768,7 +782,7 @@ export const LineChartWithMetrics = ({
                     </svg>
                     
                     {/* Tooltip */}
-                    <Tooltip interactionData={hoveredPoint} fontSize={itemFontSize*0.9} />
+                    <Tooltip interactionData={hoveredPoint} fontSize={itemFontSize} />
                 </div>
 
             {/* Collapse/Expand button - hidden on mobile */}

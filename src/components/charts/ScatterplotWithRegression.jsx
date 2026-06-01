@@ -10,6 +10,7 @@ import { AxisBottom } from '../Axes/AxisBottom';
 import { Tooltip } from '../custom_ui/Tooltip';
 import { SearchBar } from '../custom_ui/SearchBar';
 import { ArrowLeftFromLine, ArrowRightFromLine } from 'lucide-react';
+import { getTooltipOffsets } from '../../lib/utils';
 
 const FONT_FAMILY = '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
 const COLORS = d3.schemeTableau10;
@@ -407,7 +408,7 @@ export const ScatterplotWithRegression = ({
     // Model filter button text
     const modelButtonText = useMemo(() => {
         if (selectedModelTypes.length === 0) return "None";
-        if (selectedModelTypes.length === ALL_MODEL_TYPES.length) return "Filter by model type";
+        if (selectedModelTypes.length === ALL_MODEL_TYPES.length) return "Filter by regression model";
         return selectedModelTypes.map(mt => `${mt} (${modelTypeCounts[mt] || 0})`).join(", ");
     }, [selectedModelTypes, ALL_MODEL_TYPES, modelTypeCounts]);
     
@@ -649,7 +650,7 @@ export const ScatterplotWithRegression = ({
                                         const svgRect = svgElement.getBoundingClientRect();
                                         const mouseX = e.clientX - svgRect.left - MARGIN.left;
                                         
-                                        console.log({mouseX, boundsWidth})
+                                        
 
                                         // Clamp mouseX to bounds
                                         if (mouseX < 0 || mouseX > boundsWidth) {
@@ -660,15 +661,18 @@ export const ScatterplotWithRegression = ({
                                         // Calculate tooltip dimensions (fixed width for consistent positioning)
                                         const tooltipWidth = 300;
                                         const tooltipHeight = 60; // Fixed height for 3 lines
+                                        const { leftOffset, rightOffset } = getTooltipOffsets();
+
+                                        
                                         
                                         // X-position: adapt based on cursor position
                                         let xPos;
                                         if (mouseX < boundsWidth / 2) {
                                             // Cursor on left side: align tooltip left edge slightly right of cursor
-                                            xPos = e.clientX - svgRect.left*0.95;
+                                            xPos = e.clientX - svgRect.left * leftOffset;
                                         } else {
                                             // Cursor on right side: align tooltip right edge slightly left of cursor
-                                            xPos = e.clientX - svgRect.left*0.55 - tooltipWidth;
+                                            xPos = e.clientX - svgRect.left * rightOffset - tooltipWidth;
                                         }
                                         
                                         // Y-position: center tooltip on cursor

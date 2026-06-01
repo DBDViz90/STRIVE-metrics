@@ -14,6 +14,7 @@ import { Slider } from '../custom_ui/Slider';
 import { ArrowLeftFromLine, ArrowRightFromLine } from 'lucide-react';
 import { Switch } from '../custom_ui/Switch';
 import { useDimensions } from '../../../hooks/use-dimensions';
+import { getTooltipOffsets } from '../../lib/utils';
 
 // Constants
 const FONT_FAMILY = '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
@@ -138,6 +139,8 @@ export const MultiMetricLineChart = ({
     
     // Ref for metric list scrolling
     const metricListRef = useRef(null);
+    // Ref for tooltip to measure actual width
+    const tooltipRef = useRef(null);
     
     // Get all available categories from metadata
     const allCategories = useMemo(() => {
@@ -318,7 +321,7 @@ export const MultiMetricLineChart = ({
     // Get button text for model dropdown (matches ScatterplotWithRegression)
     const modelButtonText = useMemo(() => {
         if (selectedModelTypes.length === 0) return "None";
-        if (selectedModelTypes.length === ALL_MODEL_TYPES_CONST.length) return "Filter by model type";
+        if (selectedModelTypes.length === ALL_MODEL_TYPES_CONST.length) return "Filter by regression model";
         return selectedModelTypes.map(mt => `${mt} (${modelTypeCounts[mt] || 0})`).join(", ");
     }, [selectedModelTypes, ALL_MODEL_TYPES_CONST, modelTypeCounts]);
     
@@ -339,7 +342,7 @@ export const MultiMetricLineChart = ({
     // Responsive layout
     const isMobileLayout = width < MOBILE_BREAKPOINT;
     const isPaneCollapsedState = isMobileLayout || isCollapsed;
-    const scale = window.innerWidth < 1300 ? 0.85 : 0.8;
+    const scale = window.innerWidth < 1300 ? 0.8 : 0.8;
     
     // Chart sizing (matching ScatterplotWithRegression)
     const chartWidth = isPaneCollapsedState ? width * 0.8 : width * scale * 0.85;
@@ -356,7 +359,7 @@ export const MultiMetricLineChart = ({
     const axisLabelFontSize = Math.max(10, width * 0.017);
     const tickFontSize = Math.max(8, width * 0.015);
     const itemFontSize = Math.max(11, width * 0.015);
-    const tooltipFontSize = Math.max(11, width * 0.013);
+    const tooltipFontSize = Math.max(9, width * 0.011);
     
     // Calculate full year range from raw data (not filtered chartData)
     const fullYearRange = useMemo(() => {
@@ -569,9 +572,15 @@ export const MultiMetricLineChart = ({
 
         const svgRect = e.currentTarget.getBoundingClientRect();
         const mouseX = e.clientX - svgRect.left - MARGIN.left;
+        const mouseY = e.clientY - svgRect.top - MARGIN.top;
         
         // Clamp mouseX to bounds
-        if (mouseX < 0 || mouseX > boundsWidth) {
+        if (mouseX < 0 || mouseX > boundsWidth ) {
+            setTooltipData(null);
+            return;
+        }
+
+        if (mouseY < 0 || mouseX < 0 || mouseX > boundsWidth || mouseY > boundsHeight) {
             setTooltipData(null);
             return;
         }
@@ -609,9 +618,15 @@ export const MultiMetricLineChart = ({
             return;
         }
 
-        // Calculate tooltip dimensions (fixed width for consistent positioning)
-        const tooltipWidth = 300;  // Fixed width regardless of metric count
+        // Calculate tooltip dimensions based on actual content
+        const estimatedTooltipWidth = Math.max(
+          200, // minimum width
+          ...metricsList.map(m => formatMetricName(m.name).length * 8)
+        );
         const tooltipHeight = 40 + metricsList.length * 20; // Header + subheader + each metric line
+
+        // Responsive right edge distance using window.matchMedia
+        const { rightEdgeDistance } = getTooltipOffsets('multiline');
 
         // X-position: adapt based on cursor position
         let xPos;
@@ -619,8 +634,8 @@ export const MultiMetricLineChart = ({
             // Cursor on left side: align tooltip left edge slightly right of cursor
             xPos = e.clientX - svgRect.left*0.95;
         } else {
-            // Cursor on right side: align tooltip right edge slightly left of cursor
-            xPos = e.clientX - svgRect.left*0.9 - tooltipWidth*1.1;
+            // Cursor on right side: tooltip right edge at constant distance from cursor
+            xPos = e.clientX - rightEdgeDistance - estimatedTooltipWidth;
         }
 
         // Y-position: center tooltip on cursor
@@ -634,6 +649,24 @@ export const MultiMetricLineChart = ({
             metrics: metricsList
         });
         setHoveredYear(closestYear);
+
+        // Correct right-side positioning after tooltip renders (for variable width)
+        if (mouseX >= boundsWidth / 2) {
+          requestAnimationFrame(() => {
+            if (tooltipRef.current) {
+              const actualWidth = tooltipRef.current.offsetWidth;
+              const { rightEdgeDistance } = getTooltipOffsets('multiline');
+              const correctedXPos = e.clientX - rightEdgeDistance - actualWidth;
+              setTooltipData({
+                xPos: correctedXPos,
+                yPos: yPos,
+                year: closestYear,
+                startingYear: startingYear,
+                metrics: metricsList
+              });
+            }
+          });
+        }
     }, [xScale, boundsWidth, filteredChartData, selectedMetrics, formatValue, getMetricColor, MARGIN]);
 
     // Mouse leave handler
@@ -936,7 +969,10 @@ export const MultiMetricLineChart = ({
                 {/* Custom Tooltip for multi-metric hover */}
                 {tooltipData && (
                     <div
+                        ref={tooltipRef}
                         className="tooltip"
+                        // In tooltip div style (around line 946):
+                        // In tooltip div style (around line 946):
                         style={{
                             left: tooltipData.xPos,
                             top: tooltipData.yPos,
@@ -950,12 +986,13 @@ export const MultiMetricLineChart = ({
                             boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
                             whiteSpace: 'normal',
                             color: '#333',
+                            maxWidth: '350px'  // Constraint for wrapping at both edges
                         }}
                     >
                         <div style={{ backgroundColor: '#f0f0f0', padding: '2px 6px' }}>
                             {tooltipData.year}
                             <div style={{ fontSize: tooltipFontSize * 0.9, color: '#666', marginTop: '1px' }}>
-                                % change since {yearRange ? Math.round(yearRange[0]) : '...'}
+                                % change since <span style={{ color: 'blue', fontWeight: 'bold' }}>{yearRange ? Math.round(yearRange[0]) : '...'}</span>
                             </div>
                         </div>
                         {tooltipData.metrics.map((metric, idx) => (
