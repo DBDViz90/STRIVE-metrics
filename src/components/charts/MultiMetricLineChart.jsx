@@ -11,6 +11,7 @@ import { AxisBottom } from '../Axes/AxisBottom';
 import { SearchBar } from '../custom_ui/SearchBar';
 import { Tooltip } from '../custom_ui/Tooltip';
 import { Slider } from '../custom_ui/Slider';
+import { ArrowLeftFromLine, ArrowRightFromLine } from 'lucide-react';
 import { Switch } from '../custom_ui/Switch';
 import { useDimensions } from '../../../hooks/use-dimensions';
 
@@ -351,7 +352,7 @@ export const MultiMetricLineChart = ({
     const chartContainerHeight = isMobileLayout ? chartHeight + 100 : chartHeight;
     
     // Font sizes based on width (matching ScatterplotWithRegression)
-    const titleFontSize = Math.max(14, width * 0.02);
+    const titleFontSize = Math.max(14, width * 0.026);
     const axisLabelFontSize = Math.max(10, width * 0.017);
     const tickFontSize = Math.max(8, width * 0.015);
     const itemFontSize = Math.max(11, width * 0.015);
@@ -619,7 +620,7 @@ export const MultiMetricLineChart = ({
             xPos = e.clientX - svgRect.left*0.95;
         } else {
             // Cursor on right side: align tooltip right edge slightly left of cursor
-            xPos = e.clientX - svgRect.left*1.3 - tooltipWidth*1.3;
+            xPos = e.clientX - svgRect.left*0.9 - tooltipWidth*1.1;
         }
 
         // Y-position: center tooltip on cursor
@@ -700,18 +701,18 @@ export const MultiMetricLineChart = ({
         <>
             <div ref={containerRef} className="flex flex-col md:flex-row relative gap-6" style={{ width, height: chartContainerHeight, fontFamily: FONT_FAMILY, alignItems: 'flex-start', overflow: 'hidden' }}>
             {/* Collapse/Expand Button */}
-            {!isMobileLayout && (
+            {/* Expand button - only shown when pane is collapsed */}
+            {!isMobileLayout && isPaneCollapsedState && (
                 <button
-                    onClick={() => setIsCollapsed(!isCollapsed)}
+                    onClick={() => setIsCollapsed(false)}
                     className="absolute w-8 h-8 bg-blue-500 hover:bg-blue-600 rounded-md shadow border border-blue-600 flex items-center justify-center transition-colors z-20 text-white"
                     style={{
-                        right: isPaneCollapsedState ? 0 : width - chartWidth*1.03,
-                        top: 16,
-                        fontSize: 30
+                        right: 0,
+                        top: 16
                     }}
-                    title={isPaneCollapsedState ? 'Expand pane' : 'Collapse pane'}
+                    title="Expand pane"
                 >
-                    {isPaneCollapsedState ? '←' : '→'}
+                    <ArrowLeftFromLine size={20} />
                 </button>
             )}
             
@@ -730,9 +731,9 @@ export const MultiMetricLineChart = ({
                         {/* Title */}
                         {selectedMetrics.length > 0 && (
                             <>
-                                <text
+                                <text className="xl:text-2xl 2xl:text-3xl"
                                     x={boundsWidth / 2}
-                                    y={-MARGIN.top / 2 * 1.3}
+                                    y={-MARGIN.top / 2 * 1.2}
                                     fontSize={titleFontSize}
                                     textAnchor="middle"
                                     fill="#333"
@@ -740,19 +741,19 @@ export const MultiMetricLineChart = ({
                                 >
                                     Multi line chart for decoupling analysis
                                 </text>
-                                <text
+                                <text className="xl:text-base 2xl:text-xl"
                                     x={boundsWidth / 2}
-                                    y={-MARGIN.top / 2 + titleFontSize*0.45}
+                                    y={-MARGIN.top / 2 + titleFontSize*0.55}
                                     fontSize={titleFontSize*0.7}
                                     textAnchor="middle"
                                     fill="#666"
                                 >
-                                    % change in selected metrics since: <tspan fill="blue" fontWeight="bold">{yearRange ? Math.round(yearRange[0]) : '...'}</tspan>, Switzerland
+                                    % change in selected metrics since <tspan fill="blue" fontWeight="bold">{yearRange ? Math.round(yearRange[0]) : '...'}</tspan>, Switzerland
                                 </text>
-                                <text
+                                <text className="xl:text-xs 2xl:text-md"
                                     x={boundsWidth / 2}
                                     y={-MARGIN.top / 2 + titleFontSize*1.3}
-                                    fontSize={titleFontSize*0.5}
+                                    
                                     fontStyle="italic"
                                     textAnchor="middle"
                                     fill="#666"
@@ -763,12 +764,12 @@ export const MultiMetricLineChart = ({
                         )}
 
                         {/* Crisis bands toggle switch - top left of chart bounds */}
-                        <foreignObject x={10} y={10} width={150} height={30} overflow="visible" >
+                        <foreignObject x={10} y={10} width={200} height={30} overflow="visible" >
                             <div className="flex items-center gap-2" style={{ fontFamily: FONT_FAMILY, fontSize: itemFontSize }}>
                                 <Switch
                                     checked={showCrisisBands}
                                     onChange={setShowCrisisBands}
-                                    label="Crisis bands"
+                                    label="GDP crisis bands"
                                 />
                             </div>
                         </foreignObject>
@@ -986,8 +987,15 @@ export const MultiMetricLineChart = ({
                         zIndex: 1  
                     }}
                 >
-                    <div className="mb-4 text-sm font-semibold text-gray-700" style={{ fontFamily: FONT_FAMILY, fontSize: itemFontSize*1 }}>
-                        Add/remove metrics from the metric list at the bottom
+                    <div className="mb-4 flex items-center gap-2" style={{ fontFamily: FONT_FAMILY, fontSize: itemFontSize*1 }}>
+                        <button
+                            onClick={() => setIsCollapsed(true)}
+                            className="xl:w-20 2xl:w-12 h-8 bg-blue-500 hover:bg-blue-600 rounded-md shadow border border-blue-600 flex items-center justify-center transition-colors text-white"
+                            title="Collapse pane"
+                        >
+                            <ArrowRightFromLine size={20} />
+                        </button>
+                        <span className="pl-2 xl:text-xs 2xl:text-base font-semibold text-gray-700">Add/remove metrics from the metric list at the bottom</span>
                     </div>
                     {/* SECTION 1: Selection (N) with selected metrics list */}
                     <div className="mb-6">
@@ -997,8 +1005,8 @@ export const MultiMetricLineChart = ({
                             </span>
                             <button
                                 onClick={clearAllSelections}
-                                className="px-1 py-1 text-xs bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors"
-                                style={{ fontFamily: FONT_FAMILY, fontSize: itemFontSize*0.9 }}
+                                className="xl:px-1 2xl:px-2 py-1 xl:text-xs 2xl:text-base bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors"
+                                style={{ fontFamily: FONT_FAMILY }}
                             >
                                 Clear selection
                             </button>

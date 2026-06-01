@@ -10,6 +10,7 @@ import { AxisBottom } from '../Axes/AxisBottom';
 import { Slider } from '../custom_ui/Slider';
 import { SearchBar } from '../custom_ui/SearchBar';
 import { Tooltip } from '../custom_ui/Tooltip';
+import { ArrowLeftFromLine, ArrowRightFromLine } from 'lucide-react';
 import { Switch } from '../custom_ui/Switch';
 import { useDimensions } from '../../../hooks/use-dimensions';
 
@@ -625,12 +626,12 @@ export const LineChartWithMetrics = ({
                         )}
 
                         {/* Crisis bands toggle switch - top left */}
-                        <foreignObject x={10} y={10} width={150} height={30} overflow="visible">
+                        <foreignObject x={10} y={10} width={200} height={30} overflow="visible">
                             <div className="flex items-center gap-2" style={{ fontFamily: FONT_FAMILY, fontSize: itemFontSize }}>
                                 <Switch
                                     checked={showCrisisBands}
                                     onChange={setShowCrisisBands}
-                                    label="Crisis bands"
+                                    label="GDP crisis bands"
                                 />
                             </div>
                         </foreignObject>
@@ -771,19 +772,19 @@ export const LineChartWithMetrics = ({
                 </div>
 
             {/* Collapse/Expand button - hidden on mobile */}
-            {!isMobileLayout && (
-                <button
-                    onClick={() => setIsCollapsed(!isCollapsed)}
-                    className="absolute w-8 h-8 bg-blue-500 hover:bg-blue-600 rounded-md shadow border border-blue-600 flex items-center justify-center transition-colors z-20 text-white"
-                    style={{
-                        right: isPaneCollapsed ? 0 : width - chartWidth,
-                        top: 16,
-                        fontSize: 30
-                    }}
-                    title={isCollapsed ? 'Expand pane' : 'Collapse pane'}
-                >
-                    {isCollapsed ? '←' : '→'}
-                </button>
+            {!isMobileLayout &&
+                isPaneCollapsed && (
+                    <button
+                        onClick={() => setIsCollapsed(false)}
+                        className="absolute w-8 h-8 bg-blue-500 hover:bg-blue-600 rounded-md shadow border border-blue-600 flex items-center justify-center transition-colors z-20 text-white"
+                        style={{
+                            right: 0,
+                            top: 16
+                        }}
+                        title="Expand pane"
+                    >
+                        <ArrowLeftFromLine size={20} />
+                    </button>
             )}
 
             {/* Side Pane */}
@@ -796,8 +797,15 @@ export const LineChartWithMetrics = ({
                         maxHeight: chartContainerHeight
                     }}
                 >
-                <div className="mb-4 text-sm font-semibold text-gray-700" style={{ fontFamily: FONT_FAMILY, fontSize: itemFontSize*1 }}>
-                    Choose a metric from the metric list
+                <div className="mb-4 flex items-center gap-2" style={{ fontFamily: FONT_FAMILY, fontSize: itemFontSize*1 }}>
+                    <button
+                        onClick={() => setIsCollapsed(true)}
+                        className="xl:w-12 2xl:w-9 h-8 bg-blue-500 hover:bg-blue-600 rounded-md shadow border border-blue-600 flex items-center justify-center transition-colors text-white"
+                        title="Collapse pane"
+                    >
+                        <ArrowRightFromLine size={20} />
+                    </button>
+                    <span className="px-0 xl:text-xs 2xl:text-base font-semibold text-gray-700">Choose a metric from the metric list</span>
                 </div>
                 {/* Search Bar */}
                 <div className="mb-4">

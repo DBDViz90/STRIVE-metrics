@@ -32,7 +32,7 @@ export const Switch = ({ checked = true, onChange, label, className = '', style 
                     }}
                 />
             </button>
-            {label && <span className="text-sm select-none">{label}</span>}
+            {label && <span className="xl:text-xs 2xl:text-sm select-none">{label}</span>}
         </label>
     );
 };

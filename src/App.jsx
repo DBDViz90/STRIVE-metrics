@@ -1,9 +1,3 @@
-/*
- * PA_UNIL Swiss Metrics Dashboard
- * Visualizes Swiss social progress and economic data with regression analysis
- * Uses SingleMetricExplorer for single-metric-at-a-time visualization
- */
-
 import { useState, useEffect, useMemo } from 'react';
 import { ResponsiveScatterplotWithRegression } from './components/charts/ScatterplotWithRegression';
 import { ResponsiveLineChartWithMetrics } from './components/charts/LineChartWithMetrics';
@@ -202,11 +196,11 @@ export default function App() {
             </header>
 
             {/* Analysis Mode Toggle */}
-            <div className="w-[60vw] ml-72 px-0 sm:px-6 lg:px-0 py-0"> 
-                <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-2 flex gap-2">
+            <div className="w-[60vw] mx-auto px-4 sm:px-6 lg:px-8 py-2 flex items-center"> 
+                <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-2 flex gap-2 py-2">
                     <button
                         onClick={() => setAnalysisMode('single')}
-                        className={`px-4 py-2 text-md font-medium rounded transition-colors border-2 border-blue-500 ${
+                        className={`px-4 py-2 text-md font-medium leading-tight whitespace-nowrap rounded transition-colors border-2 border-blue-500 ${
                             analysisMode === 'single' 
                                 ? 'bg-blue-500 text-white' 
                                 : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
@@ -216,7 +210,7 @@ export default function App() {
                     </button>
                     <button
                         onClick={() => setAnalysisMode('multi')}
-                        className={`ml-35 px-4 py-2 text-md font-medium rounded transition-colors border-2 border-blue-500 ${
+                        className={`ml-35 px-4 py-2 text-md font-medium leading-tight whitespace-nowrap rounded transition-colors border-2 border-blue-500 ${
                             analysisMode === 'multi' 
                                 ? 'bg-blue-500 text-white' 
                                 : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
@@ -229,7 +223,7 @@ export default function App() {
 
             {/* Chart Type Toggle - Only shown in single mode */}
             {analysisMode === 'single' && (
-                <div className="w-[60vw] mx-auto px-4 sm:px-6 lg:px-8 py-2"> 
+                <div className="w-[60vw] mx-auto sm:px-6 lg:px-8 py-0 pb-2 flex items-center "> 
                     <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-2 flex gap-2 items-center ">
                         <button
                             onClick={() => setChartType('scatter')}
@@ -260,7 +254,7 @@ export default function App() {
                 {analysisMode === 'multi' ? (
                     /* Multi-Metric Analysis View */
                     <div className="bg-white rounded-lg shadow-sm border border-gray-200 -mr-18">
-                        <ResponsiveMultiMetricLineChart
+                        <ResponsiveMultiMetricLineChart 
                             data={metricsData.data}
                             seriesKeys={metricsData.seriesKeys}
                             regressionResults={regressionResults}
